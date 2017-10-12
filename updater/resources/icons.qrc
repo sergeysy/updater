@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="fail.png">icons/fail-300x300.png</file>
+        <file alias="success.png">icons/success-300x300.png</file>
+        <file alias="logo.png">icons/logo-440x320.png</file>
+    </qresource>
+</RCC>

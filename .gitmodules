@@ -1,0 +1,6 @@
+[submodule "3rd_party/utils"]
+	path = 3rd_party/utils
+	url = git@git.kartel.com.ru:multipass/valid/utils.git
+[submodule "submodules/utils"]
+	path = submodules/utils
+	url = git@git.kartel.com.ru:multipass/valid/utils.git
