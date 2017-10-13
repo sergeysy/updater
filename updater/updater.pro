@@ -1,4 +1,4 @@
-# 2017-05-24 13:11 MSK 
+# 2017-10-11 11:11 MSK 
 # Init project
 
 TEMPLATE = app
