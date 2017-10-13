@@ -80,7 +80,7 @@ unix {
 #LIBS += -l"$$LIBSQLITE"
 
 LIBS += -lboost_system
-#LIBS += -lboost_filesystem
+LIBS += -lboost_filesystem
 #LIBS += -lboost_date_time
 #LIBS += -lboost_thread
 #LIBS += -lboost_regex
