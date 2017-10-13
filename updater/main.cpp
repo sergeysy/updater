@@ -1,5 +1,8 @@
-﻿#include <signal.h>
+#include <signal.h>
+
+#if !defined (__unix__)
 #include <process.h>
+#endif
 
 #include <QTextCodec>
 #include <QApplication>
