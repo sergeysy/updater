@@ -74,17 +74,17 @@ LIBS += -L"$(BOOST_ROOT)/lib/x32/lib"
 
 # Resolve circular dependencies among the libraries
 unix {
-LIBS += -Wl,--start-group -l"$$LIBUTILS" -l"$$LIBTICKETING" -l"$$LIBHARDWARE" -Wl,--end-group
+#LIBS += -Wl,--start-group -l"$$LIBUTILS" -Wl,--end-group
 #LIBS += -l"$$LIBSETTINGS"
 #LIBS += -l"$$LIBTRANSPORT"
 #LIBS += -l"$$LIBSQLITE"
 
-#LIBS += -lboost_system
+LIBS += -lboost_system
 #LIBS += -lboost_filesystem
 #LIBS += -lboost_date_time
 #LIBS += -lboost_thread
 #LIBS += -lboost_regex
-#LIBS += -lboost_program_options
+LIBS += -lboost_program_options
 #LIBS += -lcrypto
 }
 
