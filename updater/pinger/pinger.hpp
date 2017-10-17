@@ -15,7 +15,8 @@ namespace posix_time = boost::posix_time;
 class pinger
 {
 public:
-	pinger(boost::asio::io_service& io_service, const char* destination);
+	pinger(boost::asio::io_service& io_service, const std::string& destination);
+	bool isAvailableDestination() const noexcept;
 
 private:
 	void start_send();

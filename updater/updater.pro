@@ -27,7 +27,7 @@ CONFIG(debug, debug|release) {
 }
 
 DESTDIR = "$$ROOT_DIR/build/$$CONFIGURATION/$$TARGET"
-
+message($$DESTDIR);
 QT += core widgets gui
 DEFINES += WIN64 QT_DLL QT_WIDGETS_LIB
 
@@ -50,7 +50,8 @@ HEADERS += ./updater.h \
 
 SOURCES += ./main.cpp \
 	./updater.cpp \
-	./pinger/pinger.cpp
+	./pinger/pinger.cpp 
+#	./settingsApplication/settings.ini
 
 FORMS += ./updater.ui
 
@@ -74,4 +75,16 @@ QMAKE_CXXFLAGS += -Werror
 QMAKE_CXXFLAGS += -Wall
 QMAKE_CXXFLAGS += -g
 # QMAKE_CXXFLAGS += -Wconversion
+}
+
+MYFILE = $$TARGET
+message($$TARGET);
+message($$MYFILE);
+message($$DESTDIR);
+win32 {
+QMAKE_POST_LINK += "copy \"$$_PRO_FILE_PWD_\settingsApplication\settings.ini\" \"$$DESTDIR/$$MYFILE.ini\""
+}
+
+unix {
+QMAKE_POST_LINK += "cp $$_PRO_FILE_PWD_/settingsApplication/settings.ini $$DESTDIR/$$TARGET.ini"
 }
