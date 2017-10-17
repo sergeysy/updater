@@ -4,7 +4,8 @@
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
-	updater w;
-	w.show();
+	updater mainWindow;
+
+	mainWindow.show();
 	return a.exec();
 }

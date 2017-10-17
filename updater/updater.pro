@@ -8,9 +8,12 @@ TEMPLATE = app
 TARGET = updater
 CONFIG += c++14
 
-INCLUDEPATH += ./GeneratedFiles \
-    . \
-    ./GeneratedFiles/Debug
+INCLUDEPATH += \
+	./pinger \
+	./GeneratedFiles \
+	. \
+	"$$LIB_UTILS_DIR/include" \
+	./GeneratedFiles/Debug
 
 win32 {
     INCLUDEPATH += $(BOOST_ROOT)
@@ -40,11 +43,28 @@ UI_DIR = "$$DESTDIR/.u"
 #RCC_DIR += ./GeneratedFiles
 
 win32:RC_FILE = updater.rc
-HEADERS += ./updater.h
+HEADERS += ./updater.h \
+	./pinger/ipv4_header.hpp \
+	./pinger/icmp_header.hpp \
+	./pinger/pinger.hpp
+
 SOURCES += ./main.cpp \
-    ./updater.cpp
+	./updater.cpp \
+	./pinger/pinger.cpp
+
 FORMS += ./updater.ui
+
 RESOURCES += updater.qrc
+
+LIBS += -L"$$ROOT_DIR/build/$$CONFIGURATION/$$LIBUTILS"
+LIBS += -l"$$LIBUTILS"
+
+win32 {
+LIBS += -L"$(BOOST_ROOT)/lib/x32/lib"
+#LIBS += -llibboost_system-vc140-mt-gd-1_64
+
+}
+
 
 DEFINES += QT_NO_CAST_FROM_ASCII
 

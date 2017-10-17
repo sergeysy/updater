@@ -10,6 +10,17 @@ class updater : public QMainWindow
 public:
 	updater(QWidget *parent = Q_NULLPTR);
 
+	public slots:
+	void findValidators();
 private:
 	Ui::updaterClass ui;
+	void connections();
+
+	/**/
+	QString nameIPStartSetting = QString::fromLatin1("IPStart");
+	QString nameIPEndSetting = QString::fromLatin1("IPEnd");
+	QString nameLogin = QString::fromLatin1("login");
+	QString namePassword = QString::fromLatin1("password");
+
+	bool readIdValidator(const QString& login, const QString& ip, const QString& file);
 };
