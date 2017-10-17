@@ -2,6 +2,7 @@
 /build*
 /3rd_party/curl/build*
 Makefile
+Makefile.*
 *.vc.db
 *.opendb
 *.ncb
@@ -18,3 +19,4 @@ UpgradeLog*.*
 *.sln
 *.vcxproj*
 *.rc
+*.pro.*
