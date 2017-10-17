@@ -14,17 +14,6 @@ updater::updater(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
-	/*try
-	{
-
-		boost::asio::io_service io_service;
-		pinger p(io_service, "127.0.0.1");
-		io_service.run();
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << "Exception: " << e.what() << std::endl;
-	}*/
 	connections();
 }
 //QCoreApplication::arguments()
@@ -43,27 +32,69 @@ void updater::findValidators()
 	//boost::filesystem::path full_path(boost::filesystem::initial_path<boost::filesystem::path>());
 
 	boost::filesystem::path full_path = boost::filesystem::system_complete(boost::filesystem::path(pathBinaryFile.toStdString().c_str()));
-
-	const auto folder = full_path.stem();
-	QSettings settings(QString::fromStdString(folder.string()), QSettings::Format::IniFormat);
+	const auto folder = full_path.parent_path();
+	const auto pathSettingsFile = folder/"settings.ini";//full_path.replace_extension("ini");
+	QSettings settings(QString::fromStdString(pathSettingsFile.string()), QSettings::Format::IniFormat);
 	const auto IPStartSetting = settings.value(nameIPStartSetting, QString::fromLatin1("127.0.0.1")).toString();
 	const auto IPEndSetting = settings.value(nameIPEndSetting, QString::fromLatin1("127.0.0.1")).toString();
 
 
 	const auto login = settings.value(nameLogin, QString::fromLatin1("root")).toString();
 	
-	QString statusAuth;
-	QString statusPing(QString::fromLatin1("online"));
-	if (readIdValidator(login, IPStartSetting, QString::fromLatin1("/validator/settings/client-id")))
+	QString statusPing(QString::fromLatin1("offline"));
+	try
 	{
-		statusAuth = QString::fromLatin1("ID");
+
+		boost::asio::io_service io_service;
+		pinger ping(io_service, IPStartSetting.toStdString());
+		io_service.run();
+
+		if (ping.isAvailableDestination())
+		{
+			statusPing = QString::fromLatin1("");
+		}
 	}
-	else
+	catch (std::exception& e)
 	{
-		statusAuth = QString::fromLatin1("no ID");
+		std::cerr << logger() << "Exception: " << e.what() << std::endl;
 	}
 
-	QString result = QString::fromLatin1("IP:%1 - %2/ %3").arg(IPStartSetting).arg(statusPing).arg(statusAuth);
+	QString idValidator;
+	std::string tmpFile("client_id");
+	//auto  destinationFile = folder/ tmpFile;
+	auto  destinationFile = folder/ tmpFile;
+	switch (readIdValidator(login, IPStartSetting, QString::fromLatin1("/validator/settings/client_id"), QString::fromStdString(folder.string())))
+	{
+		case 0:
+		{
+			if (boost::filesystem::is_regular_file(destinationFile) && boost::filesystem::exists(destinationFile))
+			{
+				std::ifstream in(destinationFile.string().c_str());
+				std::string contents;
+				std::getline(in, contents);
+
+				idValidator = QString::fromStdString(contents);
+			}
+			else
+			{
+				idValidator = tr("NO ID");
+			}
+			break;
+		}
+		case -1:
+		case -2:
+		{
+			idValidator = tr("no ID");
+			statusPing = tr("no ping");
+			break;
+		}
+		default:
+		{
+			idValidator = tr("no ID");
+		}
+	}
+
+	QString result = QString::fromLatin1("IP:%1 - %2 %3").arg(IPStartSetting).arg(statusPing).arg(idValidator);
 	ui.listWidget->addItem(result);
 	//QString pathFileCopy;
 	/*path p("/bin/bash");
@@ -82,17 +113,38 @@ void updater::findValidators()
 		s_ApplyBoard->addItem(bdName[i]);
 	}*/
 }
-bool updater::readIdValidator(const QString& login, const QString& ip, const QString& file)
+int updater::readIdValidator(const QString& login, const QString& ip, const QString& fileSource, const QString&  fileDestination)
 {
+#if defined(unix)
+	//linux
 	//ssh $LOGIN@$DEST_MACHINE '/etc/init.d/validator.sh stop'
 	auto process = new QProcess();
-	const auto params = QStringList() << QString::fromLatin1("%1@%2").arg(login).arg(ip) << QString::fromLatin1("'%1'").arg(file);
+	const auto params = QStringList() << QString::fromLatin1("%1@%2").arg(login).arg(ip) << QString::fromLatin1("'%1'").arg(fileSource);
 	int exitCode = process->execute(QString::fromLatin1("ssh"), params);
-	if (exitCode == 0) {
+	if (exitCode == 0)
+	{
 		const auto result = process->readAllStandardOutput();
 		std::cerr << logger() << std::endl;
-		return true;
 	}
 
-	return false;
+	return exitCode;
+#endif //end LINUX
+	
+#if defined(_WIN32) || defined(WIN32)
+	//windows
+	//pscp -scp root@10.25.153.15:/validator/bin/validator d:/temp
+	auto process = new QProcess();
+	/*const auto params = QStringList() << QString::fromLatin1("-scp %1@%2:%3").arg(login).arg(ip).arg(fileSource) << QString::fromLatin1("'%1'").arg(fileDestination);
+	int exitCode = process->execute(QString::fromLatin1("pscp"), params);*/
+	auto command = QString::fromLatin1("pscp -scp %1@%2:%3 %4").arg(login).arg(ip).arg(fileSource).arg(fileDestination);
+	int exitCode = process->execute(command);
+	if (exitCode >= 0)
+	{
+		const auto result = process->readAllStandardOutput();
+		std::cerr << logger() << std::endl;
+	}
+
+	return exitCode;
+#endif //WINDOWS
+
 }

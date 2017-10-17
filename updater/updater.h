@@ -22,5 +22,6 @@ private:
 	QString nameLogin = QString::fromLatin1("login");
 	QString namePassword = QString::fromLatin1("password");
 
-	bool readIdValidator(const QString& login, const QString& ip, const QString& file);
+	/*If the process cannot be started, -2 is returned. If the process crashes, -1 is returned. Otherwise, the process' exit code is returned.*/
+	int readIdValidator(const QString& login, const QString& ip, const QString& file, const QString&  fileDestination);
 };

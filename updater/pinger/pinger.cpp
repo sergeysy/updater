@@ -4,7 +4,7 @@ using boost::asio::ip::icmp;
 using boost::asio::deadline_timer;
 namespace posix_time = boost::posix_time;
 
-pinger::pinger(boost::asio::io_service& io_service, const char* destination)
+pinger::pinger(boost::asio::io_service& io_service, const std::string& destination)
 	: resolver_(io_service), socket_(io_service, icmp::v4()),
 	timer_(io_service), sequence_number_(0), num_replies_(0)
 {
@@ -13,6 +13,11 @@ pinger::pinger(boost::asio::io_service& io_service, const char* destination)
 
 	start_send();
 	start_receive();
+}
+
+bool pinger::isAvailableDestination() const noexcept
+{
+	return num_replies_ > 0;
 }
 
 void pinger::start_send()
@@ -48,8 +53,8 @@ void pinger::handle_timeout()
 		std::cerr << "Request timed out" << std::endl;
 
 	// Requests must be sent no less than one second apart.
-	timer_.expires_at(time_sent_ + posix_time::seconds(1));
-	timer_.async_wait(boost::bind(&pinger::start_send, this));
+	/*timer_.expires_at(time_sent_ + posix_time::seconds(1));
+	timer_.async_wait(boost::bind(&pinger::start_send, this));*/
 }
 
 void pinger::start_receive()
@@ -87,15 +92,18 @@ void pinger::handle_receive(std::size_t length)
 
 		// Print out some information about the reply packet.
 		posix_time::ptime now = posix_time::microsec_clock::universal_time();
-		std::cout << length - ipv4_hdr.header_length()
+		std::stringstream ss;
+		ss << length - ipv4_hdr.header_length()
 			<< " bytes from " << ipv4_hdr.source_address()
 			<< ": icmp_seq=" << icmp_hdr.sequence_number()
 			<< ", ttl=" << ipv4_hdr.time_to_live()
 			<< ", time=" << (now - time_sent_).total_milliseconds() << " ms"
 			<< std::endl;
+		auto ssssss = ss.str();
+		ssssss = ssssss;
 	}
 
-	start_receive();
+	//start_receive();
 }
 
 unsigned short pinger::get_identifier()
