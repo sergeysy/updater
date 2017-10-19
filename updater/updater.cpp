@@ -1,12 +1,13 @@
-#include <boost/asio.hpp>
-#include <boost/filesystem.hpp>
 
+#include <QThread>
 #include <QPushButton>
 #include <QSettings>
 #include <QProcess>
 #include <QString>
+#include <QHostAddress>
 
-#include "pinger.hpp"
+#include "detectorvalidator.hpp"
+#include "model/validatorlistmodel.hpp"
 #include "logger.hpp"
 #include "updater.h"
 
@@ -15,16 +16,26 @@ updater::updater(QWidget *parent)
 {
 	ui.setupUi(this);
 	connections();
+    auto model = new ValidatorListModel(this);
+
+    ui.listView->setModel(model);
 }
-//QCoreApplication::arguments()
+
 void updater::connections()
 {
-	connect(ui.pbFindValidators, &QPushButton::clicked, this, &updater::findValidators);
+    connect(ui.pbFindValidators, &QPushButton::clicked, this, &updater::findValidators, Qt::QueuedConnection);
+    connect(ui.pbServiceValidators, &QPushButton::clicked, this, &updater::serviceValidators, Qt::QueuedConnection);
+    connect(ui.listView, &QListView::clicked, this, &updater::showInfoValidator, Qt::QueuedConnection);
 }
+
+updater::~updater()
+{
+    emit stopAll();
+}
+
 
 void updater::findValidators()
 {
-	ui.listWidget->clear();
 	const auto argsApplication = QCoreApplication::arguments();
 
 	const auto pathBinaryFile = argsApplication.front();
@@ -34,117 +45,60 @@ void updater::findValidators()
 	boost::filesystem::path full_path = boost::filesystem::system_complete(boost::filesystem::path(pathBinaryFile.toStdString().c_str()));
 	const auto folder = full_path.parent_path();
 	const auto pathSettingsFile = folder/"settings.ini";//full_path.replace_extension("ini");
-	QSettings settings(QString::fromStdString(pathSettingsFile.string()), QSettings::Format::IniFormat);
+    std::cerr << logger() << "File settings opening..." << std::endl;
+    QSettings settings(QString::fromStdString(pathSettingsFile.string()), QSettings::Format::IniFormat);
+    std::cerr << logger() << "File settings opened" << std::endl;
 	const auto IPStartSetting = settings.value(nameIPStartSetting, QString::fromLatin1("127.0.0.1")).toString();
 	const auto IPEndSetting = settings.value(nameIPEndSetting, QString::fromLatin1("127.0.0.1")).toString();
 
+    std::cerr << logger() << "IPStartSetting="<<IPStartSetting.toStdString() << " IPEndSetting=" << IPEndSetting.toStdString() << std::endl;
 
 	const auto login = settings.value(nameLogin, QString::fromLatin1("root")).toString();
 	
-	QString statusPing(QString::fromLatin1("offline"));
-	try
-	{
+    auto ipStart = QHostAddress(IPStartSetting).toIPv4Address();
+    auto ipEnd = QHostAddress(IPEndSetting).toIPv4Address();
+    if(ipStart > ipEnd)
+    {
+        std::swap(ipEnd, ipStart);
+    }
 
-		boost::asio::io_service io_service;
-		pinger ping(io_service, IPStartSetting.toStdString());
-		io_service.run();
+    auto model = static_cast<ValidatorListModel*>(ui.listView->model());
+    model->removeRows(0, model->rowCount(QModelIndex()));
+    for(auto ip = ipStart; ip <= ipEnd; ++ip)
+    {
+        const auto ipString = QHostAddress(ip).toString();
+        DetectorValidator *device = new DetectorValidator(nullptr);
+        device->setLogin(login).setIp(ipString).setPath(folder);
 
-		if (ping.isAvailableDestination())
-		{
-			statusPing = QString::fromLatin1("");
-		}
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << logger() << "Exception: " << e.what() << std::endl;
-	}
+        QThread* thread = new QThread;
+        device->moveToThread(thread);
 
-	QString idValidator;
-	std::string tmpFile("client_id");
-	//auto  destinationFile = folder/ tmpFile;
-	auto  destinationFile = folder/ tmpFile;
-	switch (readIdValidator(login, IPStartSetting, QString::fromLatin1("/validator/settings/client_id"), QString::fromStdString(folder.string())))
-	{
-		case 0:
-		{
-			if (boost::filesystem::is_regular_file(destinationFile) && boost::filesystem::exists(destinationFile))
-			{
-				std::ifstream in(destinationFile.string().c_str());
-				std::string contents;
-				std::getline(in, contents);
+        connect(thread, &QThread::started, device, &DetectorValidator::process, Qt::QueuedConnection);
+        connect(device, &DetectorValidator::haveData, this, &updater::updateListDevices, Qt::QueuedConnection);
+        connect(device, &DetectorValidator::finished, thread, &QThread::quit, Qt::QueuedConnection);
+        connect(this, &updater::stopAll, device, &DetectorValidator::stop, Qt::QueuedConnection);
+        connect(device, &DetectorValidator::finished, device, &DetectorValidator::deleteLater, Qt::QueuedConnection);
+        connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
 
-				idValidator = QString::fromStdString(contents);
-			}
-			else
-			{
-				idValidator = tr("NO ID");
-			}
-			break;
-		}
-		case -1:
-		case -2:
-		{
-			idValidator = tr("no ID");
-			statusPing = tr("no ping");
-			break;
-		}
-		default:
-		{
-			idValidator = tr("no ID");
-		}
-	}
-
-	QString result = QString::fromLatin1("IP:%1 - %2 %3").arg(IPStartSetting).arg(statusPing).arg(idValidator);
-	ui.listWidget->addItem(result);
-	//QString pathFileCopy;
-	/*path p("/bin/bash");
-	if (is_regular_file(p))*/
-	boost::filesystem::path pathFileCopy("");
-	
-	
-	
-	
-	/*if(login.isEmpty() || )
-	//const auto password = settings.value(nameLogin, QString::fromLatin1(""));
-	//scp ~/validator/build/release/validator/validator $LOGIN@$DEST_MACHINE:/validator/bin
-	auto pingProcess = new QProcess();
-	int exitCode = pingProcess->execute(QString::fromLatin1("scp"), pathFile<< );
-	if (exitCode == 0) {
-		s_ApplyBoard->addItem(bdName[i]);
-	}*/
+        thread->start();
+    }
 }
-int updater::readIdValidator(const QString& login, const QString& ip, const QString& fileSource, const QString&  fileDestination)
+
+void updater::serviceValidators()
 {
-#if defined(unix)
-	//linux
-	//ssh $LOGIN@$DEST_MACHINE '/etc/init.d/validator.sh stop'
-	auto process = new QProcess();
-	const auto params = QStringList() << QString::fromLatin1("%1@%2").arg(login).arg(ip) << QString::fromLatin1("'%1'").arg(fileSource);
-	int exitCode = process->execute(QString::fromLatin1("ssh"), params);
-	if (exitCode == 0)
-	{
-		const auto result = process->readAllStandardOutput();
-		std::cerr << logger() << std::endl;
-	}
-
-	return exitCode;
-#endif //end LINUX
-	
-#if defined(_WIN32) || defined(WIN32)
-	//windows
-	//pscp -scp root@10.25.153.15:/validator/bin/validator d:/temp
-	auto process = new QProcess();
-	/*const auto params = QStringList() << QString::fromLatin1("-scp %1@%2:%3").arg(login).arg(ip).arg(fileSource) << QString::fromLatin1("'%1'").arg(fileDestination);
-	int exitCode = process->execute(QString::fromLatin1("pscp"), params);*/
-	auto command = QString::fromLatin1("pscp -scp %1@%2:%3 %4").arg(login).arg(ip).arg(fileSource).arg(fileDestination);
-	int exitCode = process->execute(command);
-	if (exitCode >= 0)
-	{
-		const auto result = process->readAllStandardOutput();
-		std::cerr << logger() << std::endl;
-	}
-
-	return exitCode;
-#endif //WINDOWS
 
 }
+
+void updater::updateListDevices(const QString ipString, const QString statusPing, const QString idValidator)
+{
+    std::ignore = statusPing;
+    auto model = static_cast<ValidatorListModel*>(ui.listView->model());
+    model->addDevice(Validator(ipString, idValidator));
+}
+
+void updater::showInfoValidator(const QModelIndex &index)
+{
+    const auto ipString = index.data(ValidatorListModel::deviceRole::IPRole).toString();
+}
+
+
