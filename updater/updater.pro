@@ -21,7 +21,7 @@ CONFIG(debug, debug|release) {
 message($$CONFIGURATION)
 DESTDIR = "$$ROOT_DIR/build/$$CONFIGURATION/$$TARGET"
 message($$DESTDIR);
-QT += core widgets gui
+QT += core widgets gui network
 #DEFINES += WIN64 QT_DLL QT_WIDGETS_LIB
 
 DEPENDPATH += .
@@ -39,11 +39,15 @@ win32:RC_FILE = updater.rc
 HEADERS += ./updater.h \
 	./pinger/ipv4_header.hpp \
 	./pinger/icmp_header.hpp \
-	./pinger/pinger.hpp
+	./pinger/pinger.hpp \
+    model/validatorlistmodel.hpp \
+    detectorvalidator.hpp
 
 SOURCES += ./main.cpp \
 	./updater.cpp \
-	./pinger/pinger.cpp 
+	./pinger/pinger.cpp \ 
+    model/validatorlistmodel.cpp \
+    detectorvalidator.cpp
 #	./settingsApplication/settings.ini
 
 FORMS += ./updater.ui
