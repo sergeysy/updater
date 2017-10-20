@@ -7,6 +7,7 @@ CONFIG += c++14
 INCLUDEPATH += \
 	./pinger \
         "$$LIB_UTILS_DIR/include" \
+        "$$LIB_TRANSPORT_DIR/include" \
         "$$LIB_FACADE_STORAGE_TRANSACTIONS_DIR" \
 
 win32 {
@@ -59,6 +60,11 @@ FORMS += ./updater.ui
 
 LIBS += -L"$$ROOT_DIR/build/$$CONFIGURATION/$$LIBUTILS"
 LIBS += -l"$$LIBUTILS"
+LIBS += -L"$$ROOT_DIR/build/$$CONFIGURATION/$$LIBTRANSPORT"
+LIBS += -l"$$LIBTRANSPORT"
+LIBS += -L"$$ROOT_DIR/build/$$CONFIGURATION/$$LIBFACADE_STORAGE_TRANSACTIONS"
+LIBS += -l"$$LIBFACADE_STORAGE_TRANSACTIONS"
+
 message($$LIBS)
 message($$LIBUTILS)
 win32 {
@@ -74,6 +80,7 @@ LIBS += -lboost_date_time
 LIBS += -lboost_thread
 LIBS += -lboost_regex
 LIBS += -lboost_program_options
+LIBS += -lcurl
 }
 
 

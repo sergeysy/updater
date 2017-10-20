@@ -1,3 +1,4 @@
+#include <boost/range/iterator_range.hpp>
 
 #include <QTimer>
 #include <QThread>
@@ -7,6 +8,7 @@
 #include <QHostAddress>
 
 #include "facadeStorageTransactions.hpp"
+#include "transport.hpp"
 
 #include "detectorvalidator.hpp"
 #include "model/validatorlistmodel.hpp"
@@ -161,7 +163,52 @@ void updater::showInfoValidator(const QModelIndex &index)
 
 void updater::uploadTransactionToServer()
 {
+    auto folders = folderAplication_/folderTransactionStore_;
+    auto path = boost::filesystem::path(folders);
+    const auto serviceTransactions = settings_->value(nameServiceTransactions).toString().toStdString();
+    try
+    {
+        if(boost::filesystem::exists(path) && boost::filesystem::is_directory(path))
+        {
+            for(auto& entry : boost::make_iterator_range(boost::filesystem::directory_iterator(path), {}))
+            {
+                if(boost::filesystem::is_directory(entry))
+                {
+                    FacadeStorageTransaction storage(entry.path().string());
+                    const auto transactions = storage.getTransactions();
+                    if(!transactions.empty())
+                    {
+                        std::string tsvTransactions;
+                        for(const auto& transaction : transactions)
+                        {
+                            tsvTransactions += transaction;
+                        }
+                        if(tsvTransactions.back()=='\n')
+                        {
+                            tsvTransactions.pop_back();
+                        }
+                        try
+                        {
+                            Transport::TransportImpl transport;
+                            // if posthttp code not 200, method throw
+                            const auto result = transport.postTsvHttp(serviceTransactions, tsvTransactions);
+                            std::cerr << logger() << "Result sent transactions: " << result << std::endl;
 
+                            storage.markTransactionAsSent();
+                        }
+                        catch(const std::exception& ex)
+                        {
+                            std::cerr << logger() << "Error: " << ex.what() << std::endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch(const boost::filesystem::filesystem_error& ex)
+    {
+        std::cerr << logger() << "Error: " << ex.what() << std::endl;
+    }
 }
 
 void updater::errorProcessTransactions(const QString message)

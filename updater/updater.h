@@ -35,6 +35,8 @@ private:
 	QString nameIPEndSetting = QString::fromLatin1("IPEnd");
 	QString nameLogin = QString::fromLatin1("login");
 	QString namePassword = QString::fromLatin1("password");
+    QString nameServiceTransactions = QString::fromLatin1("serviceTransactions");
+
     boost::filesystem::path folderAplication_;
     std::string folderTransactionStore_ = "transactions";
     QSettings *settings_;

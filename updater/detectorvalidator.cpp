@@ -242,6 +242,7 @@ void Transactions::process()
         std::cerr << logger() << message.toStdString() << std::endl;
         emit error(message);
     }
+    //TODO need implement remove files on validator
 
 #else
 #error Not implemented upload transactions from validator on this platform
