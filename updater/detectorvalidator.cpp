@@ -5,17 +5,17 @@
 #include <QString>
 #include <QProcess>
 
+#include "functor.hpp"
 #include "pinger.hpp"
 #include "logger.hpp"
 #include "detectorvalidator.hpp"
 
-DetectorValidator::DetectorValidator(QObject* parent)
-    : QObject(parent)
+DetectorValidator::DetectorValidator()
+    : QObject(nullptr)
 {
 }
 DetectorValidator::~DetectorValidator()
 {
-
 }
 
 DetectorValidator& DetectorValidator::setLogin(const QString& login)
@@ -145,6 +145,7 @@ int DetectorValidator::readIdValidator(const QString& login, const QString& ip, 
         if(!boost::filesystem::create_directories(pathDestination))
         {
             std::cerr << logger() << "Can not create \""<< pathDestination.string() << "\"" << std::endl;
+            return -1;
         }
     }
 
@@ -175,5 +176,79 @@ int DetectorValidator::readIdValidator(const QString& login, const QString& ip, 
 
     return exitCode;
 #endif //WINDOWS
+
+}
+
+
+Transactions::Transactions(
+        const QString &login,
+        const QString &ipString,
+        const QString& idString,
+        const QString& sourceFolder,
+        const QString& destFolder)
+    : QObject(nullptr)
+    , login_(login)
+    , ipString_(ipString)
+    , idString_(idString)
+    , sourceFolder_(sourceFolder)
+    , destFolder_(destFolder)
+{
+
+}
+
+Transactions::~Transactions()
+{
+}
+
+void Transactions::process()
+{
+#if defined(unix)
+    auto f = [this](){emit finished();};
+    AutoCall0 autoCallFinished(std::bind(f));
+
+    auto process = new QProcess();
+    auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1 >> ~/.ssh/known_hosts").arg(ipString_);
+    //auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1").arg(ip);
+    process->setProgram(QString::fromLatin1("/bin/bash"));
+    process->start();
+    std::cout << logger() << "Update host" <<std::endl;
+        int exitCode = process->write(updateKey.toStdString().c_str());
+        if (exitCode <= 0)
+        {
+            std::cerr << logger() << "ERROR execute: "<< updateKey.toStdString() << std::endl;
+
+            return ;//exitCode;
+        }
+    //int exitCode = process->execute(updateKey);
+
+    std::cerr << logger() << "Copy transactions..." <<std::endl;
+    boost::filesystem::path pathDestination(destFolder_.toStdString());
+    if(/*boost::filesystem::is_directory(pathDestination) &&*/ !boost::filesystem::exists(pathDestination))
+    {
+        if(!boost::filesystem::create_directories(pathDestination))
+        {
+            std::cerr << logger() << "Can not create \""<< pathDestination.string() << "\"" << std::endl;
+            return;
+        }
+    }
+
+    std::cerr << logger() << pathDestination.string() << std::endl;
+    const auto params = QStringList() << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login_).arg(ipString_).arg(sourceFolder_)<<QString::fromLatin1("%1").arg(destFolder_);
+    std::cerr << logger() << "scp " <<  params.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+    exitCode = process->execute(QString::fromLatin1("scp"), params);
+    if(exitCode != 0)
+    {
+        QString message(tr("Fail copy transactions from %1. Error '%2'").arg(idString_).arg(exitCode));
+        std::cerr << logger() << message.toStdString() << std::endl;
+        emit error(message);
+    }
+
+#else
+#error Not implemented upload transactions from validator on this platform
+#endif
+}
+
+void Transactions::stop()
+{
 
 }

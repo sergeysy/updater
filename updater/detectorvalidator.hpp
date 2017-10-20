@@ -8,8 +8,8 @@ class DetectorValidator : public QObject
 {
     Q_OBJECT
 public:
-    DetectorValidator(QObject* parent = nullptr);
-    ~DetectorValidator();
+    DetectorValidator();
+    virtual ~DetectorValidator();
 
     DetectorValidator& setLogin(const QString& login);
 
@@ -32,5 +32,28 @@ private:
 
     QString getStatusPing(const QString& ipString);
     int readIdValidator(const QString& login, const QString& ip, const QString& fileSource, const QString&  fileDestination);
+};
+
+class Transactions : public QObject
+{
+    Q_OBJECT
+public:
+    Transactions(const QString& login, const QString& ipString, const QString& idString, const QString &sourceFolder, const QString &destFolder);
+    virtual ~Transactions();
+
+public slots:
+    void process();
+    void stop();
+
+signals:
+    void finished();
+    void error(const QString);
+
+private:
+    QString login_;
+    QString ipString_;
+    QString idString_;
+    QString sourceFolder_;
+    QString destFolder_;
 };
 

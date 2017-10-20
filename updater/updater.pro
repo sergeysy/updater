@@ -6,11 +6,14 @@ CONFIG += c++14
 
 INCLUDEPATH += \
 	./pinger \
-	"$$LIB_UTILS_DIR/include" \
+        "$$LIB_UTILS_DIR/include" \
+        "$$LIB_FACADE_STORAGE_TRANSACTIONS_DIR" \
 
 win32 {
     INCLUDEPATH += $(BOOST_ROOT)
 }
+message($$INCLUDEPATH)
+message($$LIB_FACADE_STORAGE_TRANSACTIONS_DIR)
 
 CONFIG(debug, debug|release) {
     CONFIGURATION=debug
