@@ -215,9 +215,10 @@ void Transactions::process()
         int exitCode = process->write(updateKey.toStdString().c_str());
         if (exitCode <= 0)
         {
-            std::cerr << logger() << "ERROR execute: "<< updateKey.toStdString() << std::endl;
-
-            return ;//exitCode;
+            const auto message = tr("ERROR execute: %1").arg(updateKey);
+            std::cerr << logger() << message.toStdString() << std::endl;
+            emit error(message);
+            return;
         }
     //int exitCode = process->execute(updateKey);
 
@@ -227,22 +228,40 @@ void Transactions::process()
     {
         if(!boost::filesystem::create_directories(pathDestination))
         {
-            std::cerr << logger() << "Can not create \""<< pathDestination.string() << "\"" << std::endl;
+            const auto message = tr("Can not create \"%1\"").arg(QString::fromStdString(pathDestination.string()));
+            std::cerr << logger() << message.toStdString() << std::endl;
+            emit error(message);
             return;
         }
     }
 
     std::cerr << logger() << pathDestination.string() << std::endl;
-    const auto params = QStringList() << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login_).arg(ipString_).arg(sourceFolder_)<<QString::fromLatin1("%1").arg(destFolder_);
-    std::cerr << logger() << "scp " <<  params.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-    exitCode = process->execute(QString::fromLatin1("scp"), params);
+    const auto paramsScp = QStringList() << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login_).arg(ipString_).arg(sourceFolder_)<<QString::fromLatin1("%1").arg(destFolder_);
+    std::cerr << logger() << "scp " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+    exitCode = process->execute(QString::fromLatin1("scp"), paramsScp);
     if(exitCode != 0)
     {
         QString message(tr("Fail copy transactions from %1. Error '%2'").arg(idString_).arg(exitCode));
         std::cerr << logger() << message.toStdString() << std::endl;
         emit error(message);
+        return;
     }
-    //TODO need implement remove files on validator
+
+    //ssh username@domain.com 'rm /some/where/some_file.war'
+    //const auto paramsRemove = QStringList() << QString::fromLatin1("%1@%2").arg(login_).arg(ipString_)<<QString::fromLatin1("'rm %1/*'").arg(sourceFolder_);
+    //std::cerr << logger() << "ssh " <<  paramsRemove.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+    //exitCode = process->execute(QString::fromLatin1("ssh"), paramsRemove);
+    const auto paramsRemove = QStringList() << QString::fromLatin1("ssh %1@%2").arg(login_).arg(ipString_)<<QString::fromLatin1("\"rm -f %1/*\"").arg(sourceFolder_);
+    const auto commanadRemoveTransactions = paramsRemove.join(QString::fromLatin1(" ")).toStdString();
+    std::cerr << logger() << commanadRemoveTransactions << std::endl;
+    exitCode = process->write(commanadRemoveTransactions.c_str());
+    if(exitCode < 0)
+    {
+        QString message(tr("Fail remove transactions from %1. Error '%2'").arg(idString_).arg(exitCode));
+        std::cerr << logger() << message.toStdString() << std::endl;
+        emit error(message);
+        return;
+    }
 
 #else
 #error Not implemented upload transactions from validator on this platform

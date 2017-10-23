@@ -4,6 +4,8 @@
 
 #include <QSettings>
 #include <QtWidgets/QMainWindow>
+#include <QAtomicInt>
+
 #include "ui_updater.h"
 
 class updater : public QMainWindow
@@ -18,6 +20,7 @@ public:
 	void findValidators();
     void serviceValidators();
     void updateListDevices(const QString ipString, const QString statusPing, const QString idValidator);
+    void processTransactions();
     void showInfoValidator(const QModelIndex &index);
     void uploadTransactionToServer();
     void errorProcessTransactions(const QString);
@@ -45,7 +48,7 @@ private:
     /*If the process cannot be started, -2 is returned. If the process crashes, -1 is returned. Otherwise, the process' exit code is returned.*/
 	int readIdValidator(const QString& login, const QString& ip, const QString& file, const QString&  fileDestination);
 
-    size_t countQueryIp_;
+    QAtomicInt countQueryIp_;
     QTimer *timerDetecting_;
 
 private slots:

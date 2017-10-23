@@ -30,6 +30,7 @@ public:
     };
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const; // функция доступа к данным
     int rowCount(const QModelIndex &parent) const; // количество элементов в модели
+    virtual bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 public slots:
     void addDevice(Validator device); // добавить контакт в модель
 

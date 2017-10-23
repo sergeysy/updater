@@ -24,19 +24,6 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="pbServiceValidators">
-    <property name="geometry">
-     <rect>
-      <x>140</x>
-      <y>10</y>
-      <width>141</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Service validator's</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="pbUploadTransactionToServer">
     <property name="geometry">
      <rect>
@@ -51,10 +38,10 @@
 to server</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pbFindValidators">
+   <widget class="QPushButton" name="pbProcessValidators">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>60</x>
       <y>10</y>
       <width>111</width>
       <height>23</height>
@@ -285,10 +272,9 @@ selection-background-color: rgb(85, 85, 255);</string>
     </property>
    </widget>
    <zorder>pbUploadTransactionToServer</zorder>
-   <zorder>pbFindValidators</zorder>
+   <zorder>pbProcessValidators</zorder>
    <zorder>groupBox</zorder>
    <zorder>listView</zorder>
-   <zorder>pbServiceValidators</zorder>
    <zorder>labelStatusDetect</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -297,7 +283,7 @@ selection-background-color: rgb(85, 85, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>1079</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
   </widget>

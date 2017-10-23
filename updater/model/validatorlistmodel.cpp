@@ -69,3 +69,23 @@ int ValidatorListModel::rowCount(const QModelIndex &parent) const
 
     return devices_.size();
 }
+
+bool ValidatorListModel::removeRows(int row, int count, const QModelIndex &parent)
+{
+    std::ignore = parent;
+    if(row + count > devices_.size())
+    {
+        return false;
+    }
+
+    beginRemoveRows(parent, row, row + count);
+
+    QList<Validator>::iterator itFirst = devices_.begin();
+    QList<Validator>::iterator itEnd = devices_.begin();
+    std::advance(itFirst, row);
+    std::advance(itEnd, row + count);
+
+    devices_.erase(itFirst, itEnd);
+    endRemoveRows();
+    return true;
+}

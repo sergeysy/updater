@@ -29,8 +29,8 @@ updater::updater(QWidget *parent)
 
 void updater::connections()
 {
-    connect(ui.pbFindValidators, &QPushButton::clicked, this, &updater::findValidators, Qt::QueuedConnection);
-    connect(ui.pbServiceValidators, &QPushButton::clicked, this, &updater::serviceValidators, Qt::QueuedConnection);
+    connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::findValidators, Qt::QueuedConnection);
+    //connect(ui.pbServiceValidators, &QPushButton::clicked, this, &updater::serviceValidators, Qt::QueuedConnection);
     connect(ui.listView, &QListView::clicked, this, &updater::showInfoValidator, Qt::QueuedConnection);
     connect(ui.pbUploadTransactionToServer, &QPushButton::clicked, this, &updater::uploadTransactionToServer, Qt::QueuedConnection);
 
@@ -62,6 +62,9 @@ updater::~updater()
 
 void updater::findValidators()
 {
+    disconnect(ui.pbProcessValidators, &QPushButton::clicked, 0, 0);
+    ui.pbProcessValidators->setEnabled(false);
+    ui.pbProcessValidators->setText(tr("Load"));
     const auto IPStartSetting = settings_->value(nameIPStartSetting, QString::fromLatin1("127.0.0.1")).toString();
     const auto IPEndSetting = settings_->value(nameIPEndSetting, QString::fromLatin1("127.0.0.1")).toString();
 
@@ -98,13 +101,17 @@ void updater::findValidators()
         connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
 
         thread->start();
-        ++countQueryIp_;
+        countQueryIp_.fetchAndAddAcquire(1);
     }
     timerDetecting_->start();
 }
 
 void updater::serviceValidators()
 {
+    disconnect(ui.pbProcessValidators, &QPushButton::clicked, 0, 0);
+    ui.pbProcessValidators->setEnabled(false);
+    ui.pbProcessValidators->setText(tr("Process transactions"));
+
     const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
     //TODO get folder from settings of validator
     const QString folderTransactionsOnValidator(QString::fromLatin1("/mnt/sda/transaction"));
@@ -131,11 +138,13 @@ void updater::serviceValidators()
         connect(thread, &QThread::started, transactionProcess, &Transactions::process, Qt::QueuedConnection);
         connect(transactionProcess, &Transactions::error, this, &updater::errorProcessTransactions, Qt::QueuedConnection);
         connect(transactionProcess, &Transactions::finished, thread, &QThread::quit, Qt::QueuedConnection);
+        connect(transactionProcess, &Transactions::finished, this, &updater::processTransactions, Qt::QueuedConnection);
         connect(this, &updater::stopAll, transactionProcess, &Transactions::stop, Qt::QueuedConnection);
         connect(transactionProcess, &Transactions::finished, transactionProcess, &Transactions::deleteLater, Qt::QueuedConnection);
         connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
 
         thread->start();
+        countQueryIp_.fetchAndAddAcquire(1);
     }
 }
 
@@ -145,11 +154,31 @@ void updater::updateListDevices(const QString ipString, const QString statusPing
     auto model = static_cast<ValidatorListModel*>(ui.listView->model());
     model->addDevice(Validator(ipString, idValidator));
 
-    --countQueryIp_;
-    if( 0 == countQueryIp_)
+    const auto value = countQueryIp_.fetchAndAddAcquire(-1);
+    if( 1 == value)
     {
         timerDetecting_->stop();
         ui.labelStatusDetect->setText(tr("Validators detected"));
+
+        connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::serviceValidators, Qt::QueuedConnection);
+        ui.pbProcessValidators->setEnabled(true);
+        ui.pbProcessValidators->setText(tr("Process transactions"));
+        ui.pbProcessValidators->adjustSize();
+
+    }
+}
+
+void updater::processTransactions()
+{
+    const auto value = countQueryIp_.fetchAndAddAcquire(-1);
+    if( 1 == value)
+    {
+        ui.labelStatusDetect->setText(tr("Successful process transactions"));
+
+        connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::findValidators, Qt::QueuedConnection);
+        ui.pbProcessValidators->setEnabled(true);
+        ui.pbProcessValidators->setText(tr("Find validators"));
+        ui.pbProcessValidators->adjustSize();
     }
 }
 
@@ -218,7 +247,7 @@ void updater::errorProcessTransactions(const QString message)
 
 void updater::updateStatusDetecting()
 {
-    if(countQueryIp_>0)
+    if(countQueryIp_.fetchAndAddAcquire(0)>0)
     {
         QString status(tr("Detecting validators"));
         static int i = 0;
