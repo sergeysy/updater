@@ -1,6 +1,8 @@
 #pragma once
 
 #include <boost/filesystem.hpp>
+
+#include <QProcess>
 #include <QString>
 #include <QObject>
 
@@ -47,7 +49,8 @@ public slots:
 
 signals:
     void finished();
-    void error(const QString);
+    void error(const QString idString, const QString);
+    void updateProcess(int percent, const QString idString);
 
 private:
     QString login_;
@@ -57,3 +60,39 @@ private:
     QString destFolder_;
 };
 
+class Upload : public QObject
+{
+    Q_OBJECT
+public:
+    Upload(const QString &login, const QString &ipString, const QString &idString, const QString &pathSourceSoftware, const QString &pathSourceWhitelist);
+    virtual ~Upload();
+
+public slots:
+    void process();
+    void stop();
+
+signals:
+    void finished();
+    void error(const QString idString, const QString message);
+
+private:
+    QString login_;
+    QString ipString_;
+    QString idString_;
+    QString pathSourceSoftware_;
+    QString pathSourceWhitelist_;
+
+    QString pathUpdateSoftware_ = QString::fromLatin1("/validator/update");
+    QString pathDestinationWhitelist_ = QString::fromLatin1("/mnt/sda");
+    QProcess* process_;
+
+
+    std::string findIpk(const boost::filesystem::path& path);
+    void mkDirOnValidator(const QString& path);
+
+    void copy(const QString &sourceFile, const QString &destFolder);
+    void installIpk(const QString &pathIpk);
+
+    void copyWhitelist();
+
+};

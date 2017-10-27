@@ -3,7 +3,6 @@
 #include <boost/asio.hpp>
 
 #include <QString>
-#include <QProcess>
 
 #include "functor.hpp"
 #include "pinger.hpp"
@@ -203,9 +202,13 @@ Transactions::~Transactions()
 void Transactions::process()
 {
 #if defined(unix)
-    auto f = [this](){emit finished();};
+    auto f = [this]()
+    {
+        emit finished();
+    };
     AutoCall0 autoCallFinished(std::bind(f));
 
+    emit updateProcess(0, idString_);
     auto process = new QProcess();
     auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1 >> ~/.ssh/known_hosts").arg(ipString_);
     //auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1").arg(ip);
@@ -217,11 +220,12 @@ void Transactions::process()
         {
             const auto message = tr("ERROR execute: %1").arg(updateKey);
             std::cerr << logger() << message.toStdString() << std::endl;
-            emit error(message);
+            emit error(idString_, message);
             return;
         }
     //int exitCode = process->execute(updateKey);
 
+    emit updateProcess(10, idString_);
     std::cerr << logger() << "Copy transactions..." <<std::endl;
     boost::filesystem::path pathDestination(destFolder_.toStdString());
     if(/*boost::filesystem::is_directory(pathDestination) &&*/ !boost::filesystem::exists(pathDestination))
@@ -230,11 +234,11 @@ void Transactions::process()
         {
             const auto message = tr("Can not create \"%1\"").arg(QString::fromStdString(pathDestination.string()));
             std::cerr << logger() << message.toStdString() << std::endl;
-            emit error(message);
+            emit error(idString_, message);
             return;
         }
     }
-
+    emit updateProcess(25, idString_);
     std::cerr << logger() << pathDestination.string() << std::endl;
     const auto paramsScp = QStringList() << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login_).arg(ipString_).arg(sourceFolder_)<<QString::fromLatin1("%1").arg(destFolder_);
     std::cerr << logger() << "scp " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
@@ -243,9 +247,10 @@ void Transactions::process()
     {
         QString message(tr("Fail copy transactions from %1. Error '%2'").arg(idString_).arg(exitCode));
         std::cerr << logger() << message.toStdString() << std::endl;
-        emit error(message);
+        emit error(idString_, message);
         return;
     }
+    emit updateProcess(50, idString_);
 
     //ssh username@domain.com 'rm /some/where/some_file.war'
     //const auto paramsRemove = QStringList() << QString::fromLatin1("%1@%2").arg(login_).arg(ipString_)<<QString::fromLatin1("'rm %1/*'").arg(sourceFolder_);
@@ -259,9 +264,11 @@ void Transactions::process()
     {
         QString message(tr("Fail remove transactions from %1. Error '%2'").arg(idString_).arg(exitCode));
         std::cerr << logger() << message.toStdString() << std::endl;
-        emit error(message);
+        emit error(idString_, message);
         return;
     }
+    emit updateProcess(100, idString_);
+
 
 #else
 #error Not implemented upload transactions from validator on this platform
@@ -269,6 +276,154 @@ void Transactions::process()
 }
 
 void Transactions::stop()
+{
+
+}
+
+Upload::Upload(const QString &login,
+        const QString &ipString,
+        const QString& idString,
+        const QString& pathSourceSoftware,
+        const QString& pathSourceWhitelist)
+    : QObject(nullptr)
+    , login_(login)
+    , ipString_(ipString)
+    , idString_(idString)
+    , pathSourceSoftware_(pathSourceSoftware)
+    , pathSourceWhitelist_(pathSourceWhitelist)
+{
+
+}
+
+Upload::~Upload()
+{
+
+}
+
+std::string Upload::findIpk(const boost::filesystem::path& path)
+{
+    std::cerr << logger() << path.string() <<std::endl;
+
+    if(boost::filesystem::exists(path) && boost::filesystem::is_directory(path))
+    {
+        std::cerr << logger() << __FILE__ << ":" << __LINE__ <<std::endl;
+        for (boost::filesystem::directory_iterator itr(path); itr!=boost::filesystem::directory_iterator(); ++itr)
+        {
+            std::cerr << logger() << __FILE__ << ":" << __LINE__ <<std::endl;
+            if (boost::filesystem::is_regular_file(itr->status()))
+            {
+                std::cerr << logger() << __FILE__ << ":" << __LINE__ <<std::endl;
+                return itr->path().filename().string();
+            }
+        }
+    }
+    std::cerr << logger() << __FILE__ << ":" << __LINE__ <<std::endl;
+    return std::string();
+}
+
+void Upload::mkDirOnValidator(const QString& path)
+{
+    const auto mkDirCommand = QString::fromLatin1("ssh %1@%2 \"mkdir -p %3\"").arg(login_).arg(ipString_).arg(path);
+    std::cerr << logger() << mkDirCommand.toStdString() << std::endl;
+    auto exitCode = process_->write(mkDirCommand.toStdString().c_str());
+    if(exitCode < 0)
+    {
+        std::string message(tr("Fail create directory on %1. Error '%2'").arg(idString_).arg(exitCode).toStdString());
+        //std::cerr << logger() << message << std::endl;
+        throw std::logic_error(message);
+    }
+}
+
+void Upload::copy(const QString& sourceFile, const QString& destFolder)
+{
+    const auto pathFile(sourceFile.toStdString());
+    if(!boost::filesystem::exists(pathFile) || !boost::filesystem::is_regular_file(pathFile))
+    {
+        throw std::logic_error(QString::fromLatin1("File \"%1\" not found ").arg(sourceFile).toStdString());
+    }
+    const auto paramsScp = QStringList() << QString::fromLatin1("-r") << QString::fromLatin1("%1").arg(sourceFile)
+                                         <<QString::fromLatin1("%1@%2:%3").arg(login_).arg(ipString_).arg(destFolder);
+    std::cerr << logger() << "scp " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+    const auto exitCode = process_->execute(QString::fromLatin1("scp"), paramsScp);
+    if(exitCode != 0)
+    {
+        std::string message(tr("Fail copy \"%3\" to \"%4\" on %1. Error '%2'").arg(idString_).arg(exitCode).arg(sourceFile).arg(destFolder).toStdString());
+        std::cerr << logger() << message << std::endl;
+        throw std::logic_error(message);
+    }
+}
+
+void Upload::installIpk(const QString& pathIpk)
+{
+    return;
+    const auto installIpkCommand = QString::fromLatin1("ssh %1@%2 \"mkdir -p %3\"").arg(login_).arg(ipString_).arg(pathIpk);
+    std::cerr << logger() << installIpkCommand.toStdString() << std::endl;
+    auto exitCode = process_->write(installIpkCommand.toStdString().c_str());
+    if(exitCode < 0)
+    {
+        std::string message(tr("Fail create directory on %1. Error '%2'").arg(idString_).arg(exitCode).toStdString());
+        //std::cerr << logger() << message << std::endl;
+        throw std::logic_error(message);
+    }
+}
+
+void Upload::process()
+{
+#if defined(unix)
+    auto f = [this](){emit finished();};
+    AutoCall0 autoCallFinished(std::bind(f));
+
+    try
+    {
+        process_ = new QProcess();
+        process_->setProgram(QString::fromLatin1("/bin/bash"));
+        process_->start();
+
+        if(!pathSourceSoftware_.isEmpty())
+        {
+            mkDirOnValidator(pathUpdateSoftware_);
+
+            boost::filesystem::path pathIpk(pathSourceSoftware_.toStdString());
+            std::string filenameIpk;
+            filenameIpk = findIpk(pathIpk);
+
+            if(!filenameIpk.empty())
+            {
+                auto fullPathIpk = QString::fromStdString((pathIpk/filenameIpk).string());
+                copy(fullPathIpk, pathUpdateSoftware_);
+                installIpk(fullPathIpk);
+            }
+        }
+        else
+        {
+            std::cerr << logger() << "not need install ipk" << std::endl;
+        }
+
+        if(!pathSourceWhitelist_.isEmpty())
+        {
+            mkDirOnValidator(pathDestinationWhitelist_);
+            copy(pathSourceWhitelist_, pathDestinationWhitelist_);
+            //installWhitelist();
+        }
+        else
+        {
+            std::cerr << logger() << "Skip install whitelist" << std::endl;
+        }
+    }
+    catch(const std::exception& ex)
+    {
+        std::cerr << logger() << ex.what() <<std::endl;
+        emit error(idString_, QString::fromStdString(ex.what()));
+        return;
+    }
+
+
+#else
+#error Not implemented install ipk and update whitelist
+#endif
+}
+
+void Upload::stop()
 {
 
 }

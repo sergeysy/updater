@@ -18,12 +18,17 @@ public:
 
 	public slots:
 	void findValidators();
-    void serviceValidators();
+    void uploadTransactions();
     void updateListDevices(const QString ipString, const QString statusPing, const QString idValidator);
-    void processTransactions();
+    void updateProcessTransactions(int percent, const QString idString);
+    void finishedTransactions();
+
+    void uploadUpdate();
+    void finishedUpdate();
+
     void showInfoValidator(const QModelIndex &index);
     void uploadTransactionToServer();
-    void errorProcessTransactions(const QString);
+    void errorProcess(const QString idString, const QString);
 
 signals:
     void stopAll();
@@ -39,6 +44,8 @@ private:
 	QString nameLogin = QString::fromLatin1("login");
 	QString namePassword = QString::fromLatin1("password");
     QString nameServiceTransactions = QString::fromLatin1("serviceTransactions");
+    QString namePathUploadSoftware = QString::fromLatin1("pathUploadSoftware");
+    QString namePathUploadWhitelist = QString::fromLatin1("pathUploadWhitelist");
 
     boost::filesystem::path folderAplication_;
     std::string folderTransactionStore_ = "transactions";
@@ -50,6 +57,10 @@ private:
 
     QAtomicInt countQueryIp_;
     QTimer *timerDetecting_;
+
+    bool haveError_ = false;
+
+    void setStateFindValidator();
 
 private slots:
     void updateStatusDetecting();
