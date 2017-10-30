@@ -45,16 +45,19 @@ HEADERS += ./updater.h \
 	./pinger/icmp_header.hpp \
 	./pinger/pinger.hpp \
     model/validatorlistmodel.hpp \
-    detectorvalidator.hpp
+    detectorvalidator.hpp \
+    gui/changeiddialog.h
 
 SOURCES += ./main.cpp \
 	./updater.cpp \
 	./pinger/pinger.cpp \ 
     model/validatorlistmodel.cpp \
-    detectorvalidator.cpp
+    detectorvalidator.cpp \
+    gui/changeiddialog.cpp
 #	./settingsApplication/settings.ini
 
-FORMS += ./updater.ui
+FORMS += ./updater.ui \
+    gui/changeiddialog.ui
 
 # RESOURCES += updater.qrc
 

@@ -89,11 +89,21 @@ bool ValidatorListModel::setData(const QModelIndex &index, const QVariant &value
 
     switch (role) {
     case UpdatePercentJobRole:
+    {
         Validator& device = devices_[indexRow];
         device.setPercentJob(value.toInt());
         emit dataChanged(index, index);
         return true;
-        break;
+    }
+    break;
+    case ChangeIdRole:
+    {
+        Validator& device = devices_[indexRow];
+        device.setId(value.toString());
+        emit dataChanged(index, index);
+        return true;
+    }
+    break;
     /*default:
         break;*/
     }
@@ -150,7 +160,7 @@ QModelIndexList ValidatorListModel::match(const QModelIndex &start, int role, co
         //QList<Validator>::const_iterator itStart = devices_.constBegin()+start.row();
         QList<Validator>::const_iterator itStart(devices_.cbegin()+start.row());
         QList<Validator>::const_iterator itEnd(devices_.cend());
-        const auto idString = value.toString();
+        const auto ipString = value.toString();
         int i = start.row();
         for(auto it = itStart; it != itEnd; ++it, ++i)
         {
@@ -165,7 +175,7 @@ QModelIndexList ValidatorListModel::match(const QModelIndex &start, int role, co
                     break;
                 }
             }
-            if((*it).getId() == idString)
+            if((*it).getIP() == ipString)
             {
                 list.push_back(QAbstractItemModel::createIndex(i,0));
             }

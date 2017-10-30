@@ -10,6 +10,7 @@
 #include "facadeStorageTransactions.hpp"
 #include "transport.hpp"
 
+#include "gui/changeiddialog.h"
 #include "detectorvalidator.hpp"
 #include "model/validatorlistmodel.hpp"
 #include "logger.hpp"
@@ -29,6 +30,7 @@ updater::updater(QWidget *parent)
     proxy->setSourceModel(model);
     ui.lvStatusValidator->setModel(proxy);
     connect(model, &ValidatorListModel::dataChanged, proxy, &ValidatorProcessUpdateProxyModel::dataChanged,Qt::QueuedConnection);
+    connect(model, &ValidatorListModel::dataChanged, this, &updater::dataChanged,Qt::QueuedConnection);
     connect(model, &ValidatorListModel::rowsInserted, proxy, &ValidatorProcessUpdateProxyModel::rowsInserted,Qt::QueuedConnection);
 }
 
@@ -47,6 +49,8 @@ void updater::connections()
     ui.cbUploadWhitelist->setVisible(false);
     ui.lvStatusValidator->setVisible(false);
     ui.infoValidatorWidget->setVisible(false);
+
+    connect(ui.pbChangeId, &QPushButton::clicked, this, &updater::changeValidatorId, Qt::QueuedConnection);
 }
 
 
@@ -174,7 +178,7 @@ void updater::uploadTransactions()
     }
 }
 
-void updater::updateProcessTransactions(int percent, const QString idString)
+void updater::updateProcessTransactions(int percent, const QString ipString)
 {
     //auto model = static_cast<ValidatorListModel*>(ui.listView->model());
     auto model = ui.listView->model();
@@ -182,7 +186,7 @@ void updater::updateProcessTransactions(int percent, const QString idString)
     {
         return;
     }
-    auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::UpdatePercentJobRole, idString);
+    auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::UpdatePercentJobRole, ipString);
     for(auto& item : list)
     {
         model->setData(item, percent, ValidatorListModel::deviceRole::UpdatePercentJobRole);
@@ -316,6 +320,7 @@ void updater::showInfoValidator(const QModelIndex &index)
     ui.infoValidatorWidget->setVisible(true);
     const auto ipString = index.data(ValidatorListModel::deviceRole::IPRole).toString();
     const auto idString = index.data(ValidatorListModel::deviceRole::IdRole).toString();
+    ui.pbChangeId->setVisible(idString != DetectorValidator::noID);
 
     ui.labelIdValidatorValue->setText(idString);
 }
@@ -377,6 +382,64 @@ void updater::errorProcess(const QString idString, const QString message)
     haveError_ = true;
 }
 
+void updater::changeValidatorId()
+{
+    auto idString = ui.listView->currentIndex().data(ValidatorListModel::deviceRole::IdRole).toString();
+
+    const auto ipString = ui.listView->currentIndex().data(ValidatorListModel::deviceRole::IPRole).toString();
+    ChangeIdDialog* dialog = new ChangeIdDialog(this);
+    dialog->setEditText(idString);
+    if(dialog->exec() == QDialog::Accepted)
+    {
+        idString = dialog->text();
+        QProcess* process_ = new QProcess();
+        process_->setProgram(QString::fromLatin1("/bin/bash"));
+        process_->start();
+
+        //TOD set sourceFile
+        //ssh root@10.25.153.15 "mkdir -p /validator2/settings2;echo 40408 > /validator2/settings2/client_id"
+
+        /*QString sourceFile;
+
+        const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
+        const auto paramsScp = QStringList() << QString::fromLatin1("-r") << QString::fromLatin1("%1").arg(sourceFile)
+                                             <<QString::fromLatin1("%1@%2:%3").arg(login).arg(ipString).arg(DetectorValidator::client_id);
+        std::cerr << logger() << "scp " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+        const auto exitCode = process_->execute(QString::fromLatin1("scp"), paramsScp);*/
+        boost::filesystem::path pathSettings = boost::filesystem::path(DetectorValidator::pathClient_id.toStdString()).parent_path();
+        const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
+        const auto changeIdCommand = QString::fromLatin1("ssh %1@%2 \"mkdir -p %3 && echo %4 > %5\"")
+                .arg(login)
+                .arg(ipString)
+                .arg(QString::fromStdString(pathSettings.string()))
+                .arg(idString)
+                .arg(DetectorValidator::pathClient_id)
+                .toStdString();
+        std::cerr << logger() << changeIdCommand << std::endl;
+        int exitCode = process_->write(changeIdCommand.c_str());
+        if (exitCode <= 0)
+        {
+            std::cerr << logger() << "ERROR execute: "<< changeIdCommand << std::endl;
+            // indicate can not set id validator
+            return ;
+        }
+        modelUpdateId(idString, ipString);
+    }
+}
+
+void updater::modelUpdateId(const QString& idString, const QString ipString)
+{
+    auto model = ui.listView->model();
+    if(model == nullptr)
+    {
+        return;
+    }
+    auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::UpdatePercentJobRole, ipString);
+    for(auto& item : list)
+    {
+        model->setData(item, idString, ValidatorListModel::deviceRole::ChangeIdRole);
+    }
+}
 void updater::updateStatusDetecting()
 {
     if(countQueryIp_.fetchAndAddAcquire(0)>0)
@@ -399,4 +462,20 @@ void updater::updateStatusDetecting()
         }
         ui.labelStatusDetect->setText(status);
     }
+}
+
+void updater::dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles)
+{
+    auto currentIndex = ui.listView->currentIndex();
+    if(topLeft.row() != bottomRight.row()
+            && topLeft.column() != bottomRight.column()
+            && currentIndex.row() != topLeft.row()
+            && roles.size() != 1
+            /*&& roles.first() != ValidatorListModel::deviceRole::*/)
+    {
+        std::cerr << "I don't known updater" <<std::endl;
+        return;
+    }
+
+    ui.labelIdValidatorValue->setText(currentIndex.data(ValidatorListModel::deviceRole::IdRole).toString());
 }

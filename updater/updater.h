@@ -30,6 +30,8 @@ public:
     void uploadTransactionToServer();
     void errorProcess(const QString idString, const QString);
 
+    void changeValidatorId();
+
 signals:
     void stopAll();
 
@@ -61,7 +63,9 @@ private:
     bool haveError_ = false;
 
     void setStateFindValidator();
+    void modelUpdateId(const QString& idString, const QString ipString);
 
 private slots:
     void updateStatusDetecting();
+    void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
 };

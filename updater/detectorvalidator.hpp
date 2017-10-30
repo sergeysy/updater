@@ -5,11 +5,14 @@
 #include <QProcess>
 #include <QString>
 #include <QObject>
+#include <QCoreApplication>
+
 
 class DetectorValidator : public QObject
 {
     Q_OBJECT
 public:
+    static QString noID;
     DetectorValidator();
     virtual ~DetectorValidator();
 
@@ -34,6 +37,9 @@ private:
 
     QString getStatusPing(const QString& ipString);
     int readIdValidator(const QString& login, const QString& ip, const QString& fileSource, const QString&  fileDestination);
+
+public:
+    static QString pathClient_id;
 };
 
 class Transactions : public QObject
@@ -50,7 +56,7 @@ public slots:
 signals:
     void finished();
     void error(const QString idString, const QString);
-    void updateProcess(int percent, const QString idString);
+    void updateProcess(int percent, const QString ipString);
 
 private:
     QString login_;

@@ -9,6 +9,9 @@
 #include "logger.hpp"
 #include "detectorvalidator.hpp"
 
+QString DetectorValidator::noID = QT_TR_NOOP(QString::fromLatin1("no ID"));
+QString DetectorValidator::pathClient_id = QString::fromLatin1("/validator/settings/client_id");
+
 DetectorValidator::DetectorValidator()
     : QObject(nullptr)
 {
@@ -58,7 +61,7 @@ QString DetectorValidator::getIdValidator(const QString& login, const QString& i
     std::string tmpFile("client_id");
     //auto  destinationFile = folder/ tmpFile;
     auto  destinationFile = folder/ tmpFile;
-    switch (readIdValidator(login, ipString, QString::fromLatin1("/validator/settings/client_id"), QString::fromStdString(folder.string())))
+    switch (readIdValidator(login, ipString, pathClient_id, QString::fromStdString(folder.string())))
     {
         case 0:
         {
@@ -208,7 +211,7 @@ void Transactions::process()
     };
     AutoCall0 autoCallFinished(std::bind(f));
 
-    emit updateProcess(0, idString_);
+    emit updateProcess(0, ipString_);
     auto process = new QProcess();
     auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1 >> ~/.ssh/known_hosts").arg(ipString_);
     //auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1").arg(ip);
@@ -225,7 +228,7 @@ void Transactions::process()
         }
     //int exitCode = process->execute(updateKey);
 
-    emit updateProcess(10, idString_);
+    emit updateProcess(10, ipString_);
     std::cerr << logger() << "Copy transactions..." <<std::endl;
     boost::filesystem::path pathDestination(destFolder_.toStdString());
     if(/*boost::filesystem::is_directory(pathDestination) &&*/ !boost::filesystem::exists(pathDestination))
@@ -238,7 +241,7 @@ void Transactions::process()
             return;
         }
     }
-    emit updateProcess(25, idString_);
+    emit updateProcess(25, ipString_);
     std::cerr << logger() << pathDestination.string() << std::endl;
     const auto paramsScp = QStringList() << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login_).arg(ipString_).arg(sourceFolder_)<<QString::fromLatin1("%1").arg(destFolder_);
     std::cerr << logger() << "scp " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
@@ -250,7 +253,7 @@ void Transactions::process()
         emit error(idString_, message);
         return;
     }
-    emit updateProcess(50, idString_);
+    emit updateProcess(50, ipString_);
 
     //ssh username@domain.com 'rm /some/where/some_file.war'
     //const auto paramsRemove = QStringList() << QString::fromLatin1("%1@%2").arg(login_).arg(ipString_)<<QString::fromLatin1("'rm %1/*'").arg(sourceFolder_);
@@ -267,7 +270,7 @@ void Transactions::process()
         emit error(idString_, message);
         return;
     }
-    emit updateProcess(100, idString_);
+    emit updateProcess(100, ipString_);
 
 
 #else
@@ -427,3 +430,4 @@ void Upload::stop()
 {
 
 }
+

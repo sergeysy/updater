@@ -33,6 +33,7 @@ public:
         IdRole = Qt::UserRole + 2,
         UpdatePercentJobRole = Qt::UserRole + 3,
         PercentJobRole = Qt::UserRole + 4,
+        ChangeIdRole  =  Qt::UserRole + 5,
     };
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const; // функция доступа к данным
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
