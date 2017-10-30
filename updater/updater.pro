@@ -3,6 +3,7 @@ VERSION = 1.0.0.0
 
 TARGET = updater
 CONFIG += c++14
+# QMAKE_CXXFLAGS += -std=c++14
 
 INCLUDEPATH += \
 	./pinger \

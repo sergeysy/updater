@@ -20,7 +20,7 @@ public:
 	void findValidators();
     void uploadTransactions();
     void updateListDevices(const QString ipString, const QString statusPing, const QString idValidator);
-    void updateProcessTransactions(int percent, const QString idString);
+    void updateProcessTransactions(int percent, const QString message, const QString idString);
     void finishedTransactions();
 
     void uploadUpdate();

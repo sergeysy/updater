@@ -57,7 +57,7 @@ public slots:
 signals:
     void finished();
     void error(const QString idString, const QString);
-    void updateProcess(int percent, const QString ipString);
+    void updateProcess(int percent, const QString message, const QString ipString);
 
 private:
     QString login_;
@@ -81,6 +81,7 @@ public slots:
 signals:
     void finished();
     void error(const QString idString, const QString message);
+    void updateProcess(int percent, const QString message, const QString ipString);
 
 private:
     QString login_;

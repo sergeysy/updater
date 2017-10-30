@@ -1,3 +1,5 @@
+#include <QJsonObject>
+
 #include "validatorlistmodel.hpp"
 
 Validator::Validator(const QString& ipString, const QString& idValidator)
@@ -19,6 +21,16 @@ QString Validator::getId() const  noexcept
 QString Validator::getIP() const  noexcept
 {
     return ipString_;
+}
+
+void Validator::setMessageJob(const QString message)  noexcept
+{
+    message_ = message;
+}
+
+QString Validator::getMessageJob() const noexcept
+{
+    return message_;
 }
 
 void Validator::setPercentJob(const int percentJob)  noexcept
@@ -91,7 +103,9 @@ bool ValidatorListModel::setData(const QModelIndex &index, const QVariant &value
     case UpdatePercentJobRole:
     {
         Validator& device = devices_[indexRow];
-        device.setPercentJob(value.toInt());
+        auto jsonObject = value.toJsonObject();
+        device.setPercentJob(jsonObject[QString::fromLatin1("percent")].toInt());
+        device.setMessageJob(jsonObject[QString::fromLatin1("message")].toString());
         emit dataChanged(index, index);
         return true;
     }

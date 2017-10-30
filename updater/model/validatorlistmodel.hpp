@@ -15,10 +15,13 @@ public:
     void setPercentJob(const int percentJob) noexcept;
     int  getPercentJob() const noexcept;
 
+    void setMessageJob(const QString message) noexcept;
+    QString getMessageJob() const noexcept;
 private:
     QString ipString_;
     QString idValidator_;
     int percentJob_ = 0;
+    QString message_;
 };
 
 class ValidatorListModel : public QAbstractListModel

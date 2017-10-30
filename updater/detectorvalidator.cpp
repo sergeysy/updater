@@ -229,7 +229,8 @@ void Transactions::process()
     };
     AutoCall0 autoCallFinished(std::bind(f));
 
-    emit updateProcess(0, ipString_);
+    auto message = tr("Copy data");
+    emit updateProcess(0, message, ipString_);
     auto process = new QProcess();
     auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1 >> ~/.ssh/known_hosts").arg(ipString_);
     //auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1").arg(ip);
@@ -246,7 +247,7 @@ void Transactions::process()
         }
     //int exitCode = process->execute(updateKey);
 
-    emit updateProcess(10, ipString_);
+    emit updateProcess(10, message, ipString_);
     std::cerr << logger() << "Copy transactions..." <<std::endl;
     boost::filesystem::path pathDestination(destFolder_.toStdString());
     if(/*boost::filesystem::is_directory(pathDestination) &&*/ !boost::filesystem::exists(pathDestination))
@@ -259,7 +260,7 @@ void Transactions::process()
             return;
         }
     }
-    emit updateProcess(25, ipString_);
+    emit updateProcess(25, message, ipString_);
     std::cerr << logger() << pathDestination.string() << std::endl;
     const auto paramsScp = QStringList() << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login_).arg(ipString_).arg(sourceFolder_)<<QString::fromLatin1("%1").arg(destFolder_);
     std::cerr << logger() << "scp " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
@@ -271,7 +272,8 @@ void Transactions::process()
         emit error(idString_, message);
         return;
     }
-    emit updateProcess(50, ipString_);
+    message = tr("Delete data");
+    emit updateProcess(50, message, ipString_);
 
     //ssh username@domain.com 'rm /some/where/some_file.war'
     //const auto paramsRemove = QStringList() << QString::fromLatin1("%1@%2").arg(login_).arg(ipString_)<<QString::fromLatin1("'rm %1/*'").arg(sourceFolder_);
@@ -288,7 +290,8 @@ void Transactions::process()
         emit error(idString_, message);
         return;
     }
-    emit updateProcess(100, ipString_);
+    message = tr("Finished");
+    emit updateProcess(100, message, ipString_);
 
 
 #else
@@ -396,6 +399,8 @@ void Upload::process()
 
     try
     {
+        auto message = tr("Update software");
+        emit updateProcess(0, message, ipString_);
         process_ = new QProcess();
         process_->setProgram(QString::fromLatin1("/bin/bash"));
         process_->start();
@@ -420,6 +425,8 @@ void Upload::process()
             std::cerr << logger() << "not need install ipk" << std::endl;
         }
 
+        message = tr("Update \"whitelist\"");
+        emit updateProcess(50, message, ipString_);
         if(!pathSourceWhitelist_.isEmpty())
         {
             mkDirOnValidator(pathDestinationWhitelist_);
@@ -430,6 +437,9 @@ void Upload::process()
         {
             std::cerr << logger() << "Skip install whitelist" << std::endl;
         }
+
+        message = tr("Finished");
+        emit updateProcess(100, message, ipString_);
     }
     catch(const std::exception& ex)
     {

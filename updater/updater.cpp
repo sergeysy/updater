@@ -6,6 +6,8 @@
 #include <QProcess>
 #include <QString>
 #include <QHostAddress>
+#include <QJsonObject>
+#include <QPair>
 
 #include "facadeStorageTransactions.hpp"
 #include "transport.hpp"
@@ -32,6 +34,7 @@ updater::updater(QWidget *parent)
     connect(model, &ValidatorListModel::dataChanged, proxy, &ValidatorProcessUpdateProxyModel::dataChanged,Qt::QueuedConnection);
     connect(model, &ValidatorListModel::dataChanged, this, &updater::modelDataChanged,Qt::QueuedConnection);
     connect(model, &ValidatorListModel::modelReset, this, &updater::modelReseted,Qt::QueuedConnection);
+    connect(model, &ValidatorListModel::modelReset, proxy, &ValidatorProcessUpdateProxyModel::modelReset, Qt::QueuedConnection);
     connect(model, &ValidatorListModel::rowsInserted, proxy, &ValidatorProcessUpdateProxyModel::rowsInserted,Qt::QueuedConnection);
 }
 
@@ -180,7 +183,7 @@ void updater::uploadTransactions()
     }
 }
 
-void updater::updateProcessTransactions(int percent, const QString ipString)
+void updater::updateProcessTransactions(int percent, const QString message, const QString ipString)
 {
     //auto model = static_cast<ValidatorListModel*>(ui.listView->model());
     auto model = ui.listView->model();
@@ -188,7 +191,22 @@ void updater::updateProcessTransactions(int percent, const QString ipString)
     {
         return;
     }
-    auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::UpdatePercentJobRole, ipString);
+    QJsonObject jsonObject;
+    jsonObject.insert(tr("message"), message);
+    jsonObject.insert(tr("percent"), percent);
+    jsonObject.insert(tr("ip"), ipString);
+    /*{
+    qMakePair(tr("min"), QJsonValue(17)),
+    qMakePair(tr("max"), QJsonValue(35)),
+    qMakePair(tr("mean"), QJsonValue(20))
+    });*/
+
+    /*QJsonObject jsonObject
+    {
+        {"message", message},
+        {"ip", ipString}
+    };*/
+    auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::UpdatePercentJobRole, jsonObject);
     for(auto& item : list)
     {
         model->setData(item, percent, ValidatorListModel::deviceRole::UpdatePercentJobRole);
@@ -238,7 +256,7 @@ void updater::uploadUpdate()
     ui.pbProcessValidators->setText(tr("Process upload"));
 
     {
-        ui.lvStatusValidator->setVisible(false);
+        //ui.lvStatusValidator->setVisible(false);
     }
     const auto isNeedUpdateSoftware = ui.cbUploadSoftware->isChecked();
     const auto isNeedUploadWhitelist = ui.cbUploadWhitelist->isChecked();
@@ -277,17 +295,18 @@ void updater::uploadUpdate()
             std::cerr << logger() << "Skip upload to " << ipString.toStdString() << std::endl;
             continue;
         }
-        Upload *transactionProcess = new Upload(login, ipString, idString, pathUploadSoftware, pathUploadWhitelist);
+        Upload *uploadProcess = new Upload(login, ipString, idString, pathUploadSoftware, pathUploadWhitelist);
 
         QThread* thread = new QThread;
-        transactionProcess->moveToThread(thread);
+        uploadProcess->moveToThread(thread);
 
-        connect(thread, &QThread::started, transactionProcess, &Upload::process, Qt::QueuedConnection);
-        connect(transactionProcess, &Upload::error, this, &updater::errorProcess, Qt::QueuedConnection);
-        connect(transactionProcess, &Upload::finished, thread, &QThread::quit, Qt::QueuedConnection);
-        connect(transactionProcess, &Upload::finished, this, &updater::finishedUpdate, Qt::QueuedConnection);
-        connect(this, &updater::stopAll, transactionProcess, &Upload::stop, Qt::QueuedConnection);
-        connect(transactionProcess, &Upload::finished, transactionProcess, &Upload::deleteLater, Qt::QueuedConnection);
+        connect(thread, &QThread::started, uploadProcess, &Upload::process, Qt::QueuedConnection);
+        connect(uploadProcess, &Upload::updateProcess, this, &updater::updateProcessTransactions, Qt::QueuedConnection);
+        connect(uploadProcess, &Upload::error, this, &updater::errorProcess, Qt::QueuedConnection);
+        connect(uploadProcess, &Upload::finished, thread, &QThread::quit, Qt::QueuedConnection);
+        connect(uploadProcess, &Upload::finished, this, &updater::finishedUpdate, Qt::QueuedConnection);
+        connect(this, &updater::stopAll, uploadProcess, &Upload::stop, Qt::QueuedConnection);
+        connect(uploadProcess, &Upload::finished, uploadProcess, &Upload::deleteLater, Qt::QueuedConnection);
         connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
 
         thread->start();
@@ -497,7 +516,7 @@ void updater::modelReseted()
 
 void updater::updateInfoValidator(const QString& idValidator)
 {
-    std::cerr << logger() << ui.labelIdValidatorValue->text().toStdString() << std::endl;
+    //std::cerr << logger() << ui.labelIdValidatorValue->text().toStdString() << std::endl;
     ui.labelIdValidatorValue->setText(idValidator);
-    std::cerr << logger() << ui.labelIdValidatorValue->text().toStdString() << std::endl;
+    //std::cerr << logger() << ui.labelIdValidatorValue->text().toStdString() << std::endl;
 }
