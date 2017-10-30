@@ -4,3 +4,6 @@
 [submodule "submodules/transport"]
 	path = submodules/transport
 	url = git@git.kartel.com.ru:multipass/valid/transport.git
+[submodule "3rd_party/curl"]
+	path = 3rd_party/curl
+	url = git@git.kartel.com.ru:multipass/valid/3rd_party/curl.git
