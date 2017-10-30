@@ -30,7 +30,8 @@ updater::updater(QWidget *parent)
     proxy->setSourceModel(model);
     ui.lvStatusValidator->setModel(proxy);
     connect(model, &ValidatorListModel::dataChanged, proxy, &ValidatorProcessUpdateProxyModel::dataChanged,Qt::QueuedConnection);
-    connect(model, &ValidatorListModel::dataChanged, this, &updater::dataChanged,Qt::QueuedConnection);
+    connect(model, &ValidatorListModel::dataChanged, this, &updater::modelDataChanged,Qt::QueuedConnection);
+    connect(model, &ValidatorListModel::modelReset, this, &updater::modelReseted,Qt::QueuedConnection);
     connect(model, &ValidatorListModel::rowsInserted, proxy, &ValidatorProcessUpdateProxyModel::rowsInserted,Qt::QueuedConnection);
 }
 
@@ -95,7 +96,8 @@ void updater::findValidators()
     }
 
     auto model = static_cast<ValidatorListModel*>(ui.listView->model());
-    model->removeRows(0, model->rowCount(QModelIndex()));
+    model->clear();
+
 
     emit stopAll();
     countQueryIp_ = 0;
@@ -320,7 +322,7 @@ void updater::showInfoValidator(const QModelIndex &index)
     ui.infoValidatorWidget->setVisible(true);
     const auto ipString = index.data(ValidatorListModel::deviceRole::IPRole).toString();
     const auto idString = index.data(ValidatorListModel::deviceRole::IdRole).toString();
-    ui.pbChangeId->setVisible(idString != DetectorValidator::noID);
+    ui.pbChangeId->setVisible(idString != DetectorValidator::noValidator);
 
     ui.labelIdValidatorValue->setText(idString);
 }
@@ -396,9 +398,6 @@ void updater::changeValidatorId()
         process_->setProgram(QString::fromLatin1("/bin/bash"));
         process_->start();
 
-        //TOD set sourceFile
-        //ssh root@10.25.153.15 "mkdir -p /validator2/settings2;echo 40408 > /validator2/settings2/client_id"
-
         /*QString sourceFile;
 
         const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
@@ -408,18 +407,29 @@ void updater::changeValidatorId()
         const auto exitCode = process_->execute(QString::fromLatin1("scp"), paramsScp);*/
         boost::filesystem::path pathSettings = boost::filesystem::path(DetectorValidator::pathClient_id.toStdString()).parent_path();
         const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
-        const auto changeIdCommand = QString::fromLatin1("ssh %1@%2 \"mkdir -p %3 && echo %4 > %5\"")
+        /*const auto changeIdCommandParams = QString::fromLatin1("%1@%2 \"mkdir -p %3 && echo %4 > %5\"")
                 .arg(login)
                 .arg(ipString)
                 .arg(QString::fromStdString(pathSettings.string()))
                 .arg(idString)
                 .arg(DetectorValidator::pathClient_id)
-                .toStdString();
-        std::cerr << logger() << changeIdCommand << std::endl;
-        int exitCode = process_->write(changeIdCommand.c_str());
-        if (exitCode <= 0)
+                ;*/
+        const auto changeIdCommandParams =
+                QStringList()
+                << QString::fromLatin1("%1@%2").arg(login).arg(ipString)
+                   //<<QString::fromLatin1("exit")
+                   <<QString::fromLatin1("mkdir -p %1 && echo %2 > %3")
+                     .arg(QString::fromStdString(pathSettings.string()))
+                     .arg(idString)
+                     .arg(DetectorValidator::pathClient_id)
+                ;
+        //int exitCode = process_->write(changeIdCommand.c_str());
+        std::cerr << logger() << "ssh " << changeIdCommandParams.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+        int exitCode = process_->execute(QString::fromLatin1("ssh"), changeIdCommandParams);
+        //int exitCode = process_->execute(QString::fromLatin1("ssh")+changeIdCommandParams.join(QString::fromLatin1(" ")));
+        if (exitCode != 0)
         {
-            std::cerr << logger() << "ERROR execute: "<< changeIdCommand << std::endl;
+            std::cerr << logger() << "ERROR execute: ssh "<< changeIdCommandParams.join(QString::fromLatin1(" ")).toStdString()<< " status error code: "<< exitCode << std::endl;
             // indicate can not set id validator
             return ;
         }
@@ -464,7 +474,7 @@ void updater::updateStatusDetecting()
     }
 }
 
-void updater::dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles)
+void updater::modelDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles)
 {
     auto currentIndex = ui.listView->currentIndex();
     if(topLeft.row() != bottomRight.row()
@@ -477,5 +487,17 @@ void updater::dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomR
         return;
     }
 
-    ui.labelIdValidatorValue->setText(currentIndex.data(ValidatorListModel::deviceRole::IdRole).toString());
+    updateInfoValidator(currentIndex.data(ValidatorListModel::deviceRole::IdRole).toString());
+}
+
+void updater::modelReseted()
+{
+    updateInfoValidator(QString::fromLatin1(" "));
+}
+
+void updater::updateInfoValidator(const QString& idValidator)
+{
+    std::cerr << logger() << ui.labelIdValidatorValue->text().toStdString() << std::endl;
+    ui.labelIdValidatorValue->setText(idValidator);
+    std::cerr << logger() << ui.labelIdValidatorValue->text().toStdString() << std::endl;
 }

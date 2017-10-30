@@ -13,6 +13,7 @@ class DetectorValidator : public QObject
     Q_OBJECT
 public:
     static QString noID;
+    static QString noValidator;
     DetectorValidator();
     virtual ~DetectorValidator();
 

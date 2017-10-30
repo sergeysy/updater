@@ -188,6 +188,13 @@ QModelIndexList ValidatorListModel::match(const QModelIndex &start, int role, co
     return list;
 }
 
+void ValidatorListModel::clear()
+{
+    beginResetModel();
+    devices_.clear();
+    endResetModel();
+}
+
 ValidatorProcessUpdateProxyModel::ValidatorProcessUpdateProxyModel(QObject *parent)
   : QAbstractProxyModel(parent)
 {

@@ -65,7 +65,9 @@ private:
     void setStateFindValidator();
     void modelUpdateId(const QString& idString, const QString ipString);
 
+    void updateInfoValidator(const QString &idValidator);
 private slots:
     void updateStatusDetecting();
-    void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
+    void modelDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
+    void modelReseted();
 };

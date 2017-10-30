@@ -10,6 +10,7 @@
 #include "detectorvalidator.hpp"
 
 QString DetectorValidator::noID = QT_TR_NOOP(QString::fromLatin1("no ID"));
+QString DetectorValidator::noValidator = QT_TR_NOOP(QString::fromLatin1("empty"));
 QString DetectorValidator::pathClient_id = QString::fromLatin1("/validator/settings/client_id");
 
 DetectorValidator::DetectorValidator()
@@ -61,7 +62,9 @@ QString DetectorValidator::getIdValidator(const QString& login, const QString& i
     std::string tmpFile("client_id");
     //auto  destinationFile = folder/ tmpFile;
     auto  destinationFile = folder/ tmpFile;
-    switch (readIdValidator(login, ipString, pathClient_id, QString::fromStdString(folder.string())))
+    const auto result = readIdValidator(login, ipString, pathClient_id, QString::fromStdString(folder.string()));
+    //std::cerr << logger() << ipString.toStdString() << ":" << result<< std::endl;
+    switch (result)
     {
         case 0:
         {
@@ -76,20 +79,26 @@ QString DetectorValidator::getIdValidator(const QString& login, const QString& i
             }
             else
             {
-                idValidator = tr("NO ID");
+                idValidator = noID;
             }
             break;
         }
         case -1:
         case -2:
         {
-            idValidator = tr("no ID");
+            idValidator = noID;
             //statusPing = tr("no ping");
+            break;
+        }
+        case 1://General error in file copy
+        case 6://File does not exist
+        {
+            idValidator = noID;
             break;
         }
         default:
         {
-            idValidator = tr("no ID");
+            idValidator = noValidator;
         }
     }
 
@@ -124,9 +133,9 @@ int DetectorValidator::readIdValidator(const QString& login, const QString& ip, 
     //linux
     //ssh $LOGIN@$DEST_MACHINE '/etc/init.d/validator.sh stop'
 //echo password | ssh id@server
-    auto process = new QProcess();
     //ssh-keygen -f "/home/savin/.ssh/known_hosts" -R 10.25.153.15
     //ssh-keyscan -t ecdsa 10.25.153.15 >> ~/.ssh/known_hosts
+    auto process = new QProcess();
     auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1 >> ~/.ssh/known_hosts").arg(ip);
     //auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1").arg(ip);
     process->setProgram(QString::fromLatin1("/bin/bash"));
@@ -138,7 +147,16 @@ int DetectorValidator::readIdValidator(const QString& login, const QString& ip, 
             std::cerr << logger() << "ERROR execute: "<< updateKey.toStdString() << std::endl;
             return exitCode;
         }
-    //int exitCode = process->execute(updateKey);
+
+    //"ssh -q root@10.25.153.16 exit"
+    const auto checkConnectionParams = QStringList() << QString::fromLatin1("-q") << QString::fromLatin1("%1@%2").arg(login).arg(ip)<< QString::fromLatin1("echo");
+    std::cerr << logger() << "ssh " <<  checkConnectionParams.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+    exitCode = process->execute(QString::fromLatin1("ssh"), checkConnectionParams);
+    if(exitCode != 0)
+    {
+        std::cerr << logger() << "Fail connection to " << ip.toStdString() << " status error code: " << exitCode << std::endl;
+        return -3;
+    }
 
     std::cout << logger() << "Get ID validator" <<std::endl;
     boost::filesystem::path pathDestination(fileDestination.toStdString());
@@ -259,7 +277,7 @@ void Transactions::process()
     //const auto paramsRemove = QStringList() << QString::fromLatin1("%1@%2").arg(login_).arg(ipString_)<<QString::fromLatin1("'rm %1/*'").arg(sourceFolder_);
     //std::cerr << logger() << "ssh " <<  paramsRemove.join(QString::fromLatin1(" ")).toStdString() << std::endl;
     //exitCode = process->execute(QString::fromLatin1("ssh"), paramsRemove);
-    const auto paramsRemove = QStringList() << QString::fromLatin1("ssh %1@%2").arg(login_).arg(ipString_)<<QString::fromLatin1("\"rm -f %1/*\"").arg(sourceFolder_);
+    const auto paramsRemove = QStringList() << QString::fromLatin1("ssh %1@%2").arg(login_).arg(ipString_)<<QString::fromLatin1("rm -f %1/*").arg(sourceFolder_);
     const auto commanadRemoveTransactions = paramsRemove.join(QString::fromLatin1(" ")).toStdString();
     std::cerr << logger() << commanadRemoveTransactions << std::endl;
     exitCode = process->write(commanadRemoveTransactions.c_str());

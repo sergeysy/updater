@@ -41,6 +41,8 @@ public:
     virtual bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
     virtual QModelIndexList	match(const QModelIndex &start, int role, const QVariant &value, int hits = 1, Qt::MatchFlags flags = Qt::MatchFlags( Qt::MatchStartsWith | Qt::MatchWrap )) const override;
 
+    void clear();
+
 public slots:
     void addDevice(Validator device); // добавить контакт в модель
 
