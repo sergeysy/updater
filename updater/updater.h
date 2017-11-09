@@ -2,10 +2,12 @@
 
 #include <boost/filesystem.hpp>
 
+#include <QTranslator>
 #include <QSettings>
 #include <QtWidgets/QMainWindow>
 #include <QAtomicInt>
 
+#include "model/validatorlistmodel.hpp"
 #include "ui_updater.h"
 
 class updater : public QMainWindow
@@ -17,27 +19,29 @@ public:
     ~updater();
 
 	public slots:
-	void findValidators();
-    void uploadTransactions();
+    void commnadFindValidators();
+    void commandUploadTransactions();
     void updateListDevices(const QString ipString, const QString statusPing, const QString idValidator);
     void updateProcessTransactions(int percent, const QString message, const QString idString);
     void finishedTransactions();
 
-    void uploadUpdate();
-    void finishedUpdate();
+    void commandUpdateValidator();
+    void finishedUpdateValidator();
 
     void showInfoValidator(const QModelIndex &index);
-    void uploadTransactionToServer();
-    void errorProcess(const QString idString, const QString);
+    void commandUploadTransactionToServer();
+    void errorProcess(const QString ipString, const QString);
 
-    void changeValidatorId();
+    void commandChangeValidatorId();
 
 signals:
     void stopAll();
 
 private:
 	Ui::updaterClass ui;
-	void connections();
+    ValidatorListModel* model_;
+    ValidatorProcessUpdateProxyModel* proxy_;
+    void connections();
     void init();
 
 	/**/
@@ -48,9 +52,11 @@ private:
     QString nameServiceTransactions = QString::fromLatin1("serviceTransactions");
     QString namePathUploadSoftware = QString::fromLatin1("pathUploadSoftware");
     QString namePathUploadWhitelist = QString::fromLatin1("pathUploadWhitelist");
+    QString nameTranslatorFile = QString::fromLatin1("translator");
 
     boost::filesystem::path folderAplication_;
     std::string folderTransactionStore_ = "transactions";
+    std::string localSubFolderUpdateSoftware_ = "updates/Application";
     QSettings *settings_;
     QString getIdValidator(const QString& login, const QString& ipString, const boost::filesystem::path& folder);
 
@@ -66,8 +72,18 @@ private:
     void modelUpdateId(const QString& idString, const QString ipString);
 
     void updateInfoValidator(const QString &idValidator);
+    void fillListUpdateSoftware();
+
+    std::shared_ptr<QTranslator> myTranslator;
+    void loadTranslate();
+
 private slots:
     void updateStatusDetecting();
     void modelDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
     void modelReseted();
+
+    void commandDownloadUpdates();
+    void updateProcessDownloadUpdates(int percent, const QString message);
+    void finishedDownloadUpdates();
+    void errorProcessDownloadUpdates( const QString message);
 };

@@ -5,6 +5,12 @@ TARGET = updater
 CONFIG += c++14
 # QMAKE_CXXFLAGS += -std=c++14
 
+unix:!macx: LIBS += -L$$ROOT_DIR/3rd_party/ZipLib/Bin/ -lzip
+
+INCLUDEPATH += $$ROOT_DIR/3rd_party/ZipLib/Source/ZipLib
+DEPENDPATH += $$ROOT_DIR/3rd_party/ZipLib/Source
+
+
 INCLUDEPATH += \
 	./pinger \
         "$$LIB_UTILS_DIR/include" \
@@ -47,14 +53,16 @@ HEADERS += ./updater.h \
 	./pinger/pinger.hpp \
     model/validatorlistmodel.hpp \
     detectorvalidator.hpp \
-    gui/changeiddialog.h
+    gui/changeiddialog.h \
+    commands/commands.hpp
 
 SOURCES += ./main.cpp \
 	./updater.cpp \
 	./pinger/pinger.cpp \ 
     model/validatorlistmodel.cpp \
     detectorvalidator.cpp \
-    gui/changeiddialog.cpp
+    gui/changeiddialog.cpp \
+    commands/commands.cpp
 #	./settingsApplication/settings.ini
 
 FORMS += ./updater.ui \
@@ -107,5 +115,7 @@ QMAKE_POST_LINK += "copy \"$$_PRO_FILE_PWD_\settingsApplication\settings.ini\" \
 }
 
 unix {
-QMAKE_POST_LINK += "cp $$_PRO_FILE_PWD_/settingsApplication/settings.ini $$DESTDIR/$$TARGET.ini"
+QMAKE_POST_LINK += "cp $$_PRO_FILE_PWD_/settingsApplication/settings.ini $$DESTDIR/$$TARGET.ini;"
+QMAKE_POST_LINK += "cp -r $$_PRO_FILE_PWD_/scripts $$DESTDIR/;"
+QMAKE_POST_LINK += "cp -r $$_PRO_FILE_PWD_/*.qm $$DESTDIR/;"
 }

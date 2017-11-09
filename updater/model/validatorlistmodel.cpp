@@ -1,5 +1,7 @@
 #include <QJsonObject>
+#include <QJsonDocument>
 
+#include "logger.hpp"
 #include "validatorlistmodel.hpp"
 
 Validator::Validator(const QString& ipString, const QString& idValidator)
@@ -78,7 +80,8 @@ QVariant ValidatorListModel::data(const QModelIndex &index, int role) const
         if(ok)
         {
             const auto percent = device.getPercentJob();
-            auto result = tr("%1 %2%").arg((percent<100)?QString::fromLatin1("Recieve data "):QString::fromLatin1("Completed")).arg(percent);
+            const auto message = device.getMessageJob();
+            auto result = tr("%1 %2%").arg(message).arg(percent);
             return QVariant::fromValue(result);
         }
         else
@@ -104,9 +107,22 @@ bool ValidatorListModel::setData(const QModelIndex &index, const QVariant &value
     {
         Validator& device = devices_[indexRow];
         auto jsonObject = value.toJsonObject();
-        device.setPercentJob(jsonObject[QString::fromLatin1("percent")].toInt());
-        device.setMessageJob(jsonObject[QString::fromLatin1("message")].toString());
+        auto value = jsonObject[QString::fromLatin1("percent")];
+        if(!value.isNull())
+        {
+            const auto percent = value.toInt();
+            device.setPercentJob(percent);
+        }
+        value = jsonObject[QString::fromLatin1("message")];
+        if(!value.isNull())
+        {
+            device.setMessageJob(value.toString());
+        }
         emit dataChanged(index, index);
+
+        /*QJsonDocument doc(jsonObject);
+        QString strJson(QString::fromLatin1(doc.toJson(QJsonDocument::Compact)));
+        std::cerr << logger() << "update index model: " <<indexRow <<  " . json: " << strJson.toStdString() << std::endl;*/
         return true;
     }
     break;
@@ -170,25 +186,18 @@ QModelIndexList ValidatorListModel::match(const QModelIndex &start, int role, co
     std::ignore = flags;
 
     switch (role) {
-    case UpdatePercentJobRole:
+    case IPRole:
         //QList<Validator>::const_iterator itStart = devices_.constBegin()+start.row();
         QList<Validator>::const_iterator itStart(devices_.cbegin()+start.row());
         QList<Validator>::const_iterator itEnd(devices_.cend());
         const auto ipString = value.toString();
         int i = start.row();
-        for(auto it = itStart; it != itEnd; ++it, ++i)
+        for(auto it = itStart; it != itEnd && hits != 0; ++it, ++i)
         {
-            if(hits != -1)
-            {
                 if( hits > 0)
                 {
                     --hits;
                 }
-                else
-                {
-                    break;
-                }
-            }
             if((*it).getIP() == ipString)
             {
                 list.push_back(QAbstractItemModel::createIndex(i,0));

@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include <boost/range/iterator_range.hpp>
 
 #include <QTimer>
@@ -8,13 +10,17 @@
 #include <QHostAddress>
 #include <QJsonObject>
 #include <QPair>
+#include <QJsonDocument>
+
+#include <ZipFile.h>
+#include <streams/memstream.h>
 
 #include "facadeStorageTransactions.hpp"
 #include "transport.hpp"
 
+#include "commands/commands.hpp"
 #include "gui/changeiddialog.h"
 #include "detectorvalidator.hpp"
-#include "model/validatorlistmodel.hpp"
 #include "logger.hpp"
 #include "updater.h"
 
@@ -24,37 +30,41 @@ updater::updater(QWidget *parent)
 {
     init();
 	ui.setupUi(this);
-	connections();
-    auto model = new ValidatorListModel(this);
+    model_ = new ValidatorListModel(this);
 
-    ui.listView->setModel(model);
-    ValidatorProcessUpdateProxyModel* proxy = new ValidatorProcessUpdateProxyModel(this);
-    proxy->setSourceModel(model);
-    ui.lvStatusValidator->setModel(proxy);
-    connect(model, &ValidatorListModel::dataChanged, proxy, &ValidatorProcessUpdateProxyModel::dataChanged,Qt::QueuedConnection);
-    connect(model, &ValidatorListModel::dataChanged, this, &updater::modelDataChanged,Qt::QueuedConnection);
-    connect(model, &ValidatorListModel::modelReset, this, &updater::modelReseted,Qt::QueuedConnection);
-    connect(model, &ValidatorListModel::modelReset, proxy, &ValidatorProcessUpdateProxyModel::modelReset, Qt::QueuedConnection);
-    connect(model, &ValidatorListModel::rowsInserted, proxy, &ValidatorProcessUpdateProxyModel::rowsInserted,Qt::QueuedConnection);
+    ui.listView->setModel(model_);
+    proxy_ = new ValidatorProcessUpdateProxyModel(this);
+    proxy_->setSourceModel(model_);
+    ui.lvStatusValidator->setModel(proxy_);
+    connections();
+
+    fillListUpdateSoftware();
+
+    loadTranslate();
 }
 
 void updater::connections()
 {
-    connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::findValidators, Qt::QueuedConnection);
+    connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::commnadFindValidators, Qt::QueuedConnection);
     //connect(ui.pbServiceValidators, &QPushButton::clicked, this, &updater::serviceValidators, Qt::QueuedConnection);
     connect(ui.listView, &QListView::clicked, this, &updater::showInfoValidator, Qt::QueuedConnection);
-    connect(ui.pbUploadTransactionToServer, &QPushButton::clicked, this, &updater::uploadTransactionToServer, Qt::QueuedConnection);
+    connect(ui.pbUploadTransactionToServer, &QPushButton::clicked, this, &updater::commandUploadTransactionToServer, Qt::QueuedConnection);
 
     timerDetecting_ = new QTimer(this);
     const int intervalUpdateMSec = 100;
     timerDetecting_->setInterval(intervalUpdateMSec);
     connect(timerDetecting_, &QTimer::timeout, this, &updater::updateStatusDetecting);
-    ui.cbUploadSoftware->setVisible(false);
-    ui.cbUploadWhitelist->setVisible(false);
     ui.lvStatusValidator->setVisible(false);
     ui.infoValidatorWidget->setVisible(false);
 
-    connect(ui.pbChangeId, &QPushButton::clicked, this, &updater::changeValidatorId, Qt::QueuedConnection);
+    connect(ui.pbChangeId, &QPushButton::clicked, this, &updater::commandChangeValidatorId, Qt::QueuedConnection);
+    connect(model_, &ValidatorListModel::dataChanged, proxy_, &ValidatorProcessUpdateProxyModel::dataChanged,Qt::QueuedConnection);
+    connect(model_, &ValidatorListModel::dataChanged, this, &updater::modelDataChanged,Qt::QueuedConnection);
+    connect(model_, &ValidatorListModel::modelReset, this, &updater::modelReseted,Qt::QueuedConnection);
+    connect(model_, &ValidatorListModel::modelReset, proxy_, &ValidatorProcessUpdateProxyModel::modelReset, Qt::QueuedConnection);
+    connect(model_, &ValidatorListModel::rowsInserted, proxy_, &ValidatorProcessUpdateProxyModel::rowsInserted, Qt::QueuedConnection);
+
+    connect(ui.pbDownloadUpdates, &QPushButton::clicked, this, &updater::commandDownloadUpdates, Qt::QueuedConnection);
 }
 
 
@@ -79,11 +89,13 @@ updater::~updater()
 }
 
 
-void updater::findValidators()
+void updater::commnadFindValidators()
 {
     disconnect(ui.pbProcessValidators, &QPushButton::clicked, 0, 0);
     ui.pbProcessValidators->setEnabled(false);
     ui.pbProcessValidators->setText(tr("Load"));
+    ui.lvStatusValidator->setVisible(false);
+
     const auto IPStartSetting = settings_->value(nameIPStartSetting, QString::fromLatin1("127.0.0.1")).toString();
     const auto IPEndSetting = settings_->value(nameIPEndSetting, QString::fromLatin1("127.0.0.1")).toString();
 
@@ -126,7 +138,7 @@ void updater::findValidators()
     timerDetecting_->start();
 }
 
-void updater::uploadTransactions()
+void updater::commandUploadTransactions()
 {
     ui.pbProcessValidators->setEnabled(false);
 
@@ -195,21 +207,15 @@ void updater::updateProcessTransactions(int percent, const QString message, cons
     jsonObject.insert(tr("message"), message);
     jsonObject.insert(tr("percent"), percent);
     jsonObject.insert(tr("ip"), ipString);
-    /*{
-    qMakePair(tr("min"), QJsonValue(17)),
-    qMakePair(tr("max"), QJsonValue(35)),
-    qMakePair(tr("mean"), QJsonValue(20))
-    });*/
 
-    /*QJsonObject jsonObject
-    {
-        {"message", message},
-        {"ip", ipString}
-    };*/
-    auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::UpdatePercentJobRole, jsonObject);
+    QJsonDocument doc(jsonObject);
+    QString strJson(QString::fromLatin1(doc.toJson(QJsonDocument::Compact)));
+    //std::cerr << logger() << "json: " << strJson.toStdString() << std::endl;
+
+    auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::IPRole, ipString);
     for(auto& item : list)
     {
-        model->setData(item, percent, ValidatorListModel::deviceRole::UpdatePercentJobRole);
+        model->setData(item, jsonObject, ValidatorListModel::deviceRole::UpdatePercentJobRole);
     }
 }
 
@@ -225,7 +231,7 @@ void updater::updateListDevices(const QString ipString, const QString statusPing
         timerDetecting_->stop();
         ui.labelStatusDetect->setText(tr("Validators detected"));
 
-        connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::uploadTransactions, Qt::QueuedConnection);
+        connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::commandUploadTransactions, Qt::QueuedConnection);
         ui.pbProcessValidators->setEnabled(true);
         ui.pbProcessValidators->setText(tr("Process transactions"));
         ui.pbProcessValidators->adjustSize();
@@ -240,16 +246,14 @@ void updater::finishedTransactions()
     {
         ui.labelStatusDetect->setText(tr("Successful process transactions"));
 
-        connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::uploadUpdate, Qt::QueuedConnection);
+        connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::commandUpdateValidator, Qt::QueuedConnection);
         ui.pbProcessValidators->setEnabled(true);
         ui.pbProcessValidators->setText(tr("Upadate"));
         ui.pbProcessValidators->adjustSize();
-        ui.cbUploadSoftware->setVisible(true);
-        ui.cbUploadWhitelist->setVisible(true);
     }
 }
 
-void updater::uploadUpdate()
+void updater::commandUpdateValidator()
 {
     disconnect(ui.pbProcessValidators, &QPushButton::clicked, 0, 0);
     ui.pbProcessValidators->setEnabled(false);
@@ -258,10 +262,8 @@ void updater::uploadUpdate()
     {
         //ui.lvStatusValidator->setVisible(false);
     }
-    const auto isNeedUpdateSoftware = ui.cbUploadSoftware->isChecked();
-    const auto isNeedUploadWhitelist = ui.cbUploadWhitelist->isChecked();
-    ui.cbUploadSoftware->setVisible(false);
-    ui.cbUploadWhitelist->setVisible(false);
+    const auto isNeedUpdateSoftware = ui.comboBoxUpdateSoftware->currentIndex()!=-1;
+    const auto isNeedUploadWhitelist = ui.comboBoxUpdateWhitelist->currentIndex()!=-1;
 
     const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
     //TODO get folder from settings of validator
@@ -270,13 +272,21 @@ void updater::uploadUpdate()
     QString pathUploadSoftware;
     if(isNeedUpdateSoftware)
     {
-        pathUploadSoftware = settings_->value(namePathUploadSoftware).toString();
+        const auto data = ui.comboBoxUpdateSoftware->currentData();
+        if(!data.isNull() && data.isValid())
+        {
+            pathUploadSoftware = data.toString();//settings_->value(namePathUploadSoftware).toString();
+        }
     }
 
     QString pathUploadWhitelist;
     if(isNeedUploadWhitelist)
     {
-        pathUploadWhitelist = settings_->value(namePathUploadWhitelist).toString();
+        const auto data = ui.comboBoxUpdateWhitelist->currentData();
+        if(!data.isNull() && data.isValid())
+        {
+            pathUploadWhitelist = data.toString();//settings_->value(namePathUploadWhitelist).toString();
+        }
     }
     std::cerr << logger() << "Path update software " << pathUploadSoftware.toStdString() << std::endl;
     std::cerr << logger() << "Path update whitelist " << pathUploadWhitelist.toStdString() << std::endl;
@@ -285,9 +295,15 @@ void updater::uploadUpdate()
     const auto percent = 0;
     for(int i = 0; i < model->rowCount(QModelIndex()); ++i)
     {
-        model->setData(model->index(i), percent, ValidatorListModel::deviceRole::UpdatePercentJobRole);
         const auto ipString = model->index(i).data(ValidatorListModel::deviceRole::IPRole).toString();
         const auto idString = model->index(i).data(ValidatorListModel::deviceRole::IdRole).toString();
+
+        QJsonObject jsonObject;
+        jsonObject.insert(tr("message"), tr("Update software"));
+        jsonObject.insert(tr("percent"), percent);
+        jsonObject.insert(tr("ip"), ipString);
+
+        model->setData(model->index(i), percent, ValidatorListModel::deviceRole::UpdatePercentJobRole);
         bool isValidId = false;
         idString.toLong(&isValidId, 10);
         if(!isValidId)
@@ -304,7 +320,7 @@ void updater::uploadUpdate()
         connect(uploadProcess, &Upload::updateProcess, this, &updater::updateProcessTransactions, Qt::QueuedConnection);
         connect(uploadProcess, &Upload::error, this, &updater::errorProcess, Qt::QueuedConnection);
         connect(uploadProcess, &Upload::finished, thread, &QThread::quit, Qt::QueuedConnection);
-        connect(uploadProcess, &Upload::finished, this, &updater::finishedUpdate, Qt::QueuedConnection);
+        connect(uploadProcess, &Upload::finished, this, &updater::finishedUpdateValidator, Qt::QueuedConnection);
         connect(this, &updater::stopAll, uploadProcess, &Upload::stop, Qt::QueuedConnection);
         connect(uploadProcess, &Upload::finished, uploadProcess, &Upload::deleteLater, Qt::QueuedConnection);
         connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
@@ -316,13 +332,13 @@ void updater::uploadUpdate()
 
 void updater::setStateFindValidator()
 {
-    connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::findValidators, Qt::QueuedConnection);
+    connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::commnadFindValidators, Qt::QueuedConnection);
     ui.pbProcessValidators->setEnabled(true);
     ui.pbProcessValidators->setText(tr("Find validators"));
     ui.pbProcessValidators->adjustSize();
 }
 
-void updater::finishedUpdate()
+void updater::finishedUpdateValidator()
 {
     const auto value = countQueryIp_.fetchAndAddAcquire(-1);
     if( 1 == value)
@@ -346,7 +362,7 @@ void updater::showInfoValidator(const QModelIndex &index)
     ui.labelIdValidatorValue->setText(idString);
 }
 
-void updater::uploadTransactionToServer()
+void updater::commandUploadTransactionToServer()
 {
     auto folders = folderAplication_/folderTransactionStore_;
     auto path = boost::filesystem::path(folders);
@@ -396,14 +412,27 @@ void updater::uploadTransactionToServer()
     }
 }
 
-void updater::errorProcess(const QString idString, const QString message)
+void updater::errorProcess(const QString ipString, const QString message)
 {
-    std::ignore = idString;
+    std::ignore = ipString;
     ui.labelStatusDetect->setText(message);
     haveError_ = true;
+
+    auto model = ui.listView->model();
+    if(model == nullptr)
+    {
+        return;
+    }
+    QJsonObject jsonObject;
+    jsonObject.insert(tr("message"), message);
+    auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::IPRole, ipString);
+    for(auto& item : list)
+    {
+        model->setData(item, jsonObject, ValidatorListModel::deviceRole::UpdatePercentJobRole);
+    }
 }
 
-void updater::changeValidatorId()
+void updater::commandChangeValidatorId()
 {
     auto idString = ui.listView->currentIndex().data(ValidatorListModel::deviceRole::IdRole).toString();
 
@@ -463,7 +492,7 @@ void updater::modelUpdateId(const QString& idString, const QString ipString)
     {
         return;
     }
-    auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::UpdatePercentJobRole, ipString);
+    auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::IPRole, ipString);
     for(auto& item : list)
     {
         model->setData(item, idString, ValidatorListModel::deviceRole::ChangeIdRole);
@@ -514,9 +543,119 @@ void updater::modelReseted()
     updateInfoValidator(QString::fromLatin1(" "));
 }
 
+void updater::commandDownloadUpdates()
+{
+    const std::string filenameDownloadScript("download_updates.sh");
+    const auto scriptFilename = folderAplication_/"scripts"/filenameDownloadScript;
+    /*if(boost::filesystem::exists(scriptFilename) && boost::filesystem::is_regular_file(scriptFilename))
+    {
+        std::cerr << logger() << "Not found script: " << scriptFilename.string() << std::endl;
+        return;
+    }*/
+
+    disconnect(ui.pbProcessValidators, &QPushButton::clicked, 0, 0);
+    ui.pbProcessValidators->setEnabled(false);
+    ui.pbDownloadUpdates->setEnabled(false);
+
+    const QString sourcePathSW(QStringLiteral("./images/Application"));
+    const QString destinationPath = QString::fromStdString((folderAplication_/localSubFolderUpdateSoftware_).string());
+    DownloadUpdates *downloadUpdateProcess = new DownloadUpdates(QString::fromStdString(scriptFilename.string()), sourcePathSW, destinationPath);
+
+    QThread* thread = new QThread;
+    downloadUpdateProcess->moveToThread(thread);
+
+    connect(thread, &QThread::started, downloadUpdateProcess, &DownloadUpdates::process, Qt::QueuedConnection);
+    connect(downloadUpdateProcess, &DownloadUpdates::updateProcess, this, &updater::updateProcessDownloadUpdates, Qt::QueuedConnection);
+    connect(downloadUpdateProcess, &DownloadUpdates::error, this, &updater::errorProcessDownloadUpdates, Qt::QueuedConnection);
+    connect(downloadUpdateProcess, &DownloadUpdates::finished, thread, &QThread::quit, Qt::QueuedConnection);
+    connect(downloadUpdateProcess, &DownloadUpdates::finished, this, &updater::finishedDownloadUpdates, Qt::QueuedConnection);
+    connect(this, &updater::stopAll, downloadUpdateProcess, &DownloadUpdates::stop, Qt::QueuedConnection);
+    connect(downloadUpdateProcess, &DownloadUpdates::finished, downloadUpdateProcess, &DownloadUpdates::deleteLater, Qt::QueuedConnection);
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
+
+    thread->start();
+}
+
+void updater::updateProcessDownloadUpdates(int percent, const QString message)
+{
+    ui.labelStatusDetect->setText(tr("%1 %2%").arg(message).arg(percent));
+}
+
+void updater::finishedDownloadUpdates()
+{
+    connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::commnadFindValidators, Qt::QueuedConnection);
+    ui.pbProcessValidators->setEnabled(true);
+    ui.pbDownloadUpdates->setEnabled(true);
+    ui.comboBoxUpdateSoftware->clear();
+    ui.comboBoxUpdateSoftware->setCurrentIndex(-1);
+    ui.comboBoxUpdateWhitelist->clear();
+    ui.comboBoxUpdateWhitelist->setCurrentIndex(-1);
+
+    fillListUpdateSoftware();
+}
+
+void updater::fillListUpdateSoftware()
+{
+    boost::filesystem::path path(folderAplication_/localSubFolderUpdateSoftware_);
+    std::cerr << logger() << path.string() << std::endl;
+
+    for(auto& entry : boost::make_iterator_range(boost::filesystem::directory_iterator(path), {}))
+    {
+        std::cerr <<  entry.path().string() << std::endl;
+
+        if(boost::filesystem::is_regular_file(entry))
+        {
+            try
+            {
+                /*const auto zipFilename = entry.path().string();
+                const auto tmpFolder = folderAplication_/localSubFolderUpdateSoftware_/"tmp";
+                boost::filesystem::create_directories(tmpFolder);
+                const auto tmpFile = (tmpFolder/"README.md");
+                ZipFile::ExtractFile(zipFilename, "README.md", tmpFile.string());
+
+                std::ifstream in(tmpFile.string().c_str());
+                std::string contents;
+                std::getline(in, contents);
+                std::cerr << logger() << contents <<std::endl;*/
+                //ui.comboBoxUpdateSoftware->insertItem(-1, QIcon(), QString::fromStdString(contents), QString::fromStdString(entry.path().string()));
+                ui.comboBoxUpdateSoftware->addItem(QString::fromStdString(entry.path().filename().string()), QVariant::fromValue<QString>(QString::fromStdString(entry.path().string())));
+            }
+            catch(const std::exception& ex)
+            {
+                std::cerr << logger() << ex.what() <<std::endl;
+            }
+        }
+    }
+}
+
+void updater::errorProcessDownloadUpdates( const QString message)
+{
+    finishedDownloadUpdates();
+    ui.labelStatusDetect->setText(message);
+}
+
 void updater::updateInfoValidator(const QString& idValidator)
 {
     //std::cerr << logger() << ui.labelIdValidatorValue->text().toStdString() << std::endl;
     ui.labelIdValidatorValue->setText(idValidator);
     //std::cerr << logger() << ui.labelIdValidatorValue->text().toStdString() << std::endl;
+}
+
+void updater::loadTranslate()
+{
+    //QTranslator* myTranslator = new QTranslator(QCoreApplication::instance());
+    //myTranslator.load("validator_" + QLocale::system().name());
+
+    myTranslator = std::make_shared<QTranslator>();
+    std::cerr << logger() << "Locale: " << QLocale::system().name().toStdString() << " .Load traslator file: " <<settings_->value(nameTranslatorFile).toString().toStdString()
+              << " from " << folderAplication_.string() <<std::endl;
+    if(!myTranslator->load(settings_->value(nameTranslatorFile).toString(), QString::fromStdString(folderAplication_.string())))
+    {
+        std::cerr << logger() << "Not loaded file translator" << std::endl;
+        return;
+    }
+    std::cerr << logger() << "File translator was loaded" << std::endl;
+
+    QCoreApplication::instance()->installTranslator(myTranslator.get());
+    QApplication::instance()->processEvents();
 }
