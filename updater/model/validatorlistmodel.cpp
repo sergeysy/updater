@@ -7,6 +7,7 @@
 Validator::Validator(const QString& ipString, const QJsonObject data)
     : ipString_(ipString)
     , idValidator_(data[QString::fromLatin1("idValidator")].toString())
+    , jsonObject_(data)
 {
 
 }
@@ -23,6 +24,11 @@ QString Validator::getId() const  noexcept
 QString Validator::getIP() const  noexcept
 {
     return ipString_;
+}
+
+QString Validator::getTimezone() const  noexcept
+{
+    return jsonObject_[QString::fromLatin1("timezone")].toString();
 }
 
 void Validator::setMessageJob(const QString message)  noexcept
@@ -75,6 +81,7 @@ QVariant ValidatorListModel::data(const QModelIndex &index, int role) const
         return device.getIP();
         break;
     case PercentJobRole:
+    {
         bool ok = false;
         device.getId().toInt(&ok);
         if(ok)
@@ -88,6 +95,10 @@ QVariant ValidatorListModel::data(const QModelIndex &index, int role) const
         {
             return QVariant::fromValue(tr("Nothing do"));
         }
+    }
+        break;
+    case TimezoneRole:
+        return device.getTimezone();
         break;
     /*default:
         break;*/

@@ -355,9 +355,11 @@ void updater::showInfoValidator(const QModelIndex &index)
     ui.infoValidatorWidget->setVisible(true);
     const auto ipString = index.data(ValidatorListModel::deviceRole::IPRole).toString();
     const auto idString = index.data(ValidatorListModel::deviceRole::IdRole).toString();
+    const auto timezoneString = index.data(ValidatorListModel::deviceRole::TimezoneRole).toString();
     ui.pbChangeId->setVisible(idString != DetectorValidator::noValidator);
 
     ui.labelIdValidatorValue->setText(idString);
+    ui.labelTimezoneValue->setText(timezoneString);
 }
 
 void updater::commandUploadTransactionToServer()

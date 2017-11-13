@@ -48,8 +48,10 @@ void DetectorValidator::process()
     statusPing = getStatusPing(ipString_);
     const auto result = readSettingsValidator(login_, ipString_, pathSettings, QString::fromStdString(path_.string()));
 
-    idValidator = getIdValidator(result, path_);
-    const auto timezone = getTimezone(result, path_);
+    const auto pathDest = path_/"settings";
+    idValidator = getIdValidator(result, pathDest);
+    std::cerr << logger() <<"result="<<result<<std::endl;
+    const auto timezone = getTimezone(result, pathDest);
     std::ignore = timezone;
 
     QJsonObject data;
@@ -116,14 +118,17 @@ QString DetectorValidator::getIdValidator(const int result, const boost::filesys
 QString DetectorValidator::getTimezone(const int result, const boost::filesystem::path& folder)
 {
 #if defined(unix)
+    std::cerr<<logger() << __FUNCTION__<<std::endl;
     QString timezone;
-    if(0 == result)
+    if(0 != result)
     {
+        std::cerr<<logger()<<"Error " << __FUNCTION__<<std::endl;
         return timezone;
     }
     std::string tmpFile("timezone");
     //auto  destinationFile = folder/ tmpFile;
     auto  destinationFile = folder/ tmpFile;
+    std::cerr<<logger()<<destinationFile.string()<<std::endl;
     if (boost::filesystem::is_regular_file(destinationFile) && boost::filesystem::exists(destinationFile))
     {
         std::cerr << logger() << "Opening: " << destinationFile.string() << std::endl;
@@ -134,6 +139,7 @@ QString DetectorValidator::getTimezone(const int result, const boost::filesystem
         timezone = QString::fromStdString(contents);
     }
 
+    std::cerr<<logger()<<"timezone="<<timezone.toStdString()<<std::endl;
     return timezone;
 #else //end LINUX
     #error Not implemented upload transactions from validator on this platform

@@ -1,4 +1,6 @@
 #pragma once
+
+#include <QJsonObject>
 #include <QString>
 #include <QAbstractListModel>
 #include <QAbstractProxyModel>
@@ -12,6 +14,7 @@ public:
     void setId(const QString& idValidator);
     QString getId() const noexcept;
     QString getIP() const noexcept;
+    QString getTimezone() const noexcept;
     void setPercentJob(const int percentJob) noexcept;
     int  getPercentJob() const noexcept;
 
@@ -20,6 +23,7 @@ public:
 private:
     QString ipString_;
     QString idValidator_;
+    QJsonObject jsonObject_;
     int percentJob_ = 0;
     QString message_;
 };
@@ -37,6 +41,7 @@ public:
         UpdatePercentJobRole = Qt::UserRole + 3,
         PercentJobRole = Qt::UserRole + 4,
         ChangeIdRole  =  Qt::UserRole + 5,
+        TimezoneRole = Qt::UserRole + 6,
     };
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const; // функция доступа к данным
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
