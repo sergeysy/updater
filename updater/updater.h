@@ -2,6 +2,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include <QJsonObject>
 #include <QTranslator>
 #include <QSettings>
 #include <QtWidgets/QMainWindow>
@@ -21,7 +22,7 @@ public:
 	public slots:
     void commnadFindValidators();
     void commandUploadTransactions();
-    void updateListDevices(const QString ipString, const QString statusPing, const QString idValidator);
+    void updateListDevices(const QString ipString, const QJsonObject data);
     void updateProcessTransactions(int percent, const QString message, const QString idString);
     void finishedTransactions();
 
@@ -56,7 +57,7 @@ private:
 
     boost::filesystem::path folderAplication_;
     std::string folderTransactionStore_ = "transactions";
-    std::string localSubFolderUpdateSoftware_ = "updates/Application";
+    std::string localSubFolderUpdateSoftware_ = "updates";
     QSettings *settings_;
     QString getIdValidator(const QString& login, const QString& ipString, const boost::filesystem::path& folder);
 

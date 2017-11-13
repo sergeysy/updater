@@ -6,7 +6,7 @@
 class Validator
 {
 public:
-    Validator(const QString& ipString, const QString& idValidator);
+    Validator(const QString& ipString, const QJsonObject);
     ~Validator();
 
     void setId(const QString& idValidator);

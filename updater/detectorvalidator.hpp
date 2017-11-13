@@ -2,6 +2,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include <QJsonObject>
 #include <QProcess>
 #include <QString>
 #include <QObject>
@@ -26,7 +27,7 @@ public slots:
     void process();
     void stop();
 signals:
-    void haveData(const QString ipString, const QString statusPing, const QString idValidator);
+    void haveData(const QString ipString, const QJsonObject data);
     void finished();
 
 private:
@@ -34,12 +35,13 @@ private:
     QString ipString_;
     boost::filesystem::path path_;
 
-    QString getIdValidator(const QString& login, const QString& ipString, const boost::filesystem::path& folder);
+    QString getIdValidator(const int result, const boost::filesystem::path& folder);
+    QString getTimezone(const int result, const boost::filesystem::path& folder);
 
     QString getStatusPing(const QString& ipString);
-    int readIdValidator(const QString& login, const QString& ip, const QString& fileSource, const QString&  fileDestination);
+    int readSettingsValidator(const QString& login, const QString& ip, const QString& folderSource, const QString&  folderDestination);
 
 public:
-    static QString pathClient_id;
+    static QString pathSettings;
 };
 

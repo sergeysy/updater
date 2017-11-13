@@ -595,13 +595,6 @@ selection-background-color: rgb(85, 85, 255);</string>
    <property name="nativeMenuBar">
     <bool>false</bool>
    </property>
-   <widget class="QMenu" name="menuUpdater">
-    <property name="title">
-     <string>Updater</string>
-    </property>
-    <addaction name="actionDownload_updates"/>
-   </widget>
-   <addaction name="menuUpdater"/>
   </widget>
   <action name="actionDownload_updates">
    <property name="text">

@@ -2,6 +2,7 @@
 
 #include <boost/asio.hpp>
 
+#include <QJsonObject>
 #include <QString>
 
 #include "functor.hpp"
@@ -11,7 +12,7 @@
 
 QString DetectorValidator::noID = QT_TR_NOOP(QString::fromLatin1("no ID"));
 QString DetectorValidator::noValidator = QT_TR_NOOP(QString::fromLatin1("empty"));
-QString DetectorValidator::pathClient_id = QString::fromLatin1("/validator/settings/client_id");
+QString DetectorValidator::pathSettings = QString::fromLatin1("/validator/settings");
 
 DetectorValidator::DetectorValidator()
     : QObject(nullptr)
@@ -45,24 +46,31 @@ void DetectorValidator::process()
     QString idValidator;
 
     statusPing = getStatusPing(ipString_);
-    idValidator = getIdValidator(login_, ipString_, path_);
+    const auto result = readSettingsValidator(login_, ipString_, pathSettings, QString::fromStdString(path_.string()));
 
+    idValidator = getIdValidator(result, path_);
+    const auto timezone = getTimezone(result, path_);
+    std::ignore = timezone;
 
-    emit haveData(ipString_, statusPing, idValidator);
+    QJsonObject data;
+    data.insert(QString::fromLatin1("idValidator"), idValidator);
+    data.insert(QString::fromLatin1("timezone"), timezone);
+
+    emit haveData(ipString_, data);
     emit finished();
     return ;
 }
+
 void DetectorValidator::stop()
 {
 
 }
-QString DetectorValidator::getIdValidator(const QString& login, const QString& ipString, const boost::filesystem::path& folder)
+
+QString DetectorValidator::getIdValidator(const int result, const boost::filesystem::path& folder)
 {
     QString idValidator;
     std::string tmpFile("client_id");
-    //auto  destinationFile = folder/ tmpFile;
     auto  destinationFile = folder/ tmpFile;
-    const auto result = readIdValidator(login, ipString, pathClient_id, QString::fromStdString(folder.string()));
     //std::cerr << logger() << ipString.toStdString() << ":" << result<< std::endl;
     switch (result)
     {
@@ -105,6 +113,33 @@ QString DetectorValidator::getIdValidator(const QString& login, const QString& i
     return idValidator;
 }
 
+QString DetectorValidator::getTimezone(const int result, const boost::filesystem::path& folder)
+{
+#if defined(unix)
+    QString timezone;
+    if(0 == result)
+    {
+        return timezone;
+    }
+    std::string tmpFile("timezone");
+    //auto  destinationFile = folder/ tmpFile;
+    auto  destinationFile = folder/ tmpFile;
+    if (boost::filesystem::is_regular_file(destinationFile) && boost::filesystem::exists(destinationFile))
+    {
+        std::cerr << logger() << "Opening: " << destinationFile.string() << std::endl;
+        std::ifstream in(destinationFile.string().c_str());
+        std::string contents;
+        std::getline(in, contents);
+
+        timezone = QString::fromStdString(contents);
+    }
+
+    return timezone;
+#else //end LINUX
+    #error Not implemented upload transactions from validator on this platform
+#endif
+}
+
 QString DetectorValidator::getStatusPing(const QString& ipString)
 {
     QString statusPing(QString::fromLatin1(""));
@@ -127,7 +162,7 @@ QString DetectorValidator::getStatusPing(const QString& ipString)
     }
     return statusPing;
 }
-int DetectorValidator::readIdValidator(const QString& login, const QString& ip, const QString& fileSource, const QString&  fileDestination)
+int DetectorValidator::readSettingsValidator(const QString& login, const QString& ip, const QString& folderSource, const QString&  folderDestination)
 {
 #if defined(unix)
     //linux
@@ -158,8 +193,8 @@ int DetectorValidator::readIdValidator(const QString& login, const QString& ip, 
         return -3;
     }
 
-    std::cout << logger() << "Get ID validator" <<std::endl;
-    boost::filesystem::path pathDestination(fileDestination.toStdString());
+    std::cout << logger() << "copy settings validator" <<std::endl;
+    boost::filesystem::path pathDestination(folderDestination.toStdString());
     if(boost::filesystem::is_directory(pathDestination) && !boost::filesystem::exists(pathDestination))
     {
         if(!boost::filesystem::create_directories(pathDestination))
@@ -169,12 +204,12 @@ int DetectorValidator::readIdValidator(const QString& login, const QString& ip, 
         }
     }
 
-    const auto params = QStringList() << QString::fromLatin1("%1@%2:%3").arg(login).arg(ip).arg(fileSource)<<QString::fromLatin1("%1").arg(fileDestination);
+    const auto params = QStringList() << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login).arg(ip).arg(folderSource)<<QString::fromLatin1("%1").arg(folderDestination);
     std::cerr << "scp " <<  params.join(QString::fromLatin1(" ")).toStdString() << std::endl;
     exitCode = process->execute(QString::fromLatin1("scp"), params);
     if(exitCode != 0)
     {
-        std::cerr << logger() << "Fail get ID validator" << std::endl;
+        std::cerr << logger() << "Fail copy settings validator" << std::endl;
     }
 
     return exitCode;

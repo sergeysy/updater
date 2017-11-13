@@ -4,9 +4,9 @@
 #include "logger.hpp"
 #include "validatorlistmodel.hpp"
 
-Validator::Validator(const QString& ipString, const QString& idValidator)
+Validator::Validator(const QString& ipString, const QJsonObject data)
     : ipString_(ipString)
-    , idValidator_(idValidator)
+    , idValidator_(data[QString::fromLatin1("idValidator")].toString())
 {
 
 }

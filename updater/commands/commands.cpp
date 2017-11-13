@@ -100,8 +100,7 @@ void Transactions::process()
     }
     message = tr("Finished");
     emit updateProcess(100, message, ipString_);
-std::cerr << "111111111111: "<< QString::fromLatin1(process_->readAllStandardError()).toStdString();
-std::cout << "111111111111: " << QString::fromLatin1(process_->readAllStandardOutput()).toStdString();
+
 #else
 #error Not implemented upload transactions from validator on this platform
 #endif

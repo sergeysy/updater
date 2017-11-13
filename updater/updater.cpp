@@ -39,8 +39,6 @@ updater::updater(QWidget *parent)
     connections();
 
     fillListUpdateSoftware();
-
-    loadTranslate();
 }
 
 void updater::connections()
@@ -81,6 +79,7 @@ void updater::init()
     settings_ = new QSettings(QString::fromStdString(pathSettingsFile.string()), QSettings::Format::IniFormat, this);
     std::cerr << logger() << "File settings opened" << std::endl;
 
+    loadTranslate();
 }
 
 updater::~updater()
@@ -219,11 +218,10 @@ void updater::updateProcessTransactions(int percent, const QString message, cons
     }
 }
 
-void updater::updateListDevices(const QString ipString, const QString statusPing, const QString idValidator)
+void updater::updateListDevices(const QString ipString, const QJsonObject data)
 {
-    std::ignore = statusPing;
     auto model = static_cast<ValidatorListModel*>(ui.listView->model());
-    model->addDevice(Validator(ipString, idValidator));
+    model->addDevice(Validator(ipString, data));
 
     const auto value = countQueryIp_.fetchAndAddAcquire(-1);
     if( 1 == value)
@@ -453,7 +451,7 @@ void updater::commandChangeValidatorId()
                                              <<QString::fromLatin1("%1@%2:%3").arg(login).arg(ipString).arg(DetectorValidator::client_id);
         std::cerr << logger() << "scp " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
         const auto exitCode = process_->execute(QString::fromLatin1("scp"), paramsScp);*/
-        boost::filesystem::path pathSettings = boost::filesystem::path(DetectorValidator::pathClient_id.toStdString()).parent_path();
+        boost::filesystem::path pathSettings = boost::filesystem::path(DetectorValidator::pathSettings.toStdString()).parent_path();
         const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
         /*const auto changeIdCommandParams = QString::fromLatin1("%1@%2 \"mkdir -p %3 && echo %4 > %5\"")
                 .arg(login)
@@ -469,7 +467,7 @@ void updater::commandChangeValidatorId()
                    <<QString::fromLatin1("mkdir -p %1 && echo %2 > %3")
                      .arg(QString::fromStdString(pathSettings.string()))
                      .arg(idString)
-                     .arg(DetectorValidator::pathClient_id)
+                     .arg(DetectorValidator::pathSettings)
                 ;
         //int exitCode = process_->write(changeIdCommand.c_str());
         std::cerr << logger() << "ssh " << changeIdCommandParams.join(QString::fromLatin1(" ")).toStdString() << std::endl;
@@ -553,7 +551,6 @@ void updater::commandDownloadUpdates()
         return;
     }*/
 
-    disconnect(ui.pbProcessValidators, &QPushButton::clicked, 0, 0);
     ui.pbProcessValidators->setEnabled(false);
     ui.pbDownloadUpdates->setEnabled(false);
 
@@ -583,7 +580,6 @@ void updater::updateProcessDownloadUpdates(int percent, const QString message)
 
 void updater::finishedDownloadUpdates()
 {
-    connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::commnadFindValidators, Qt::QueuedConnection);
     ui.pbProcessValidators->setEnabled(true);
     ui.pbDownloadUpdates->setEnabled(true);
     ui.comboBoxUpdateSoftware->clear();
@@ -596,8 +592,16 @@ void updater::finishedDownloadUpdates()
 
 void updater::fillListUpdateSoftware()
 {
-    boost::filesystem::path path(folderAplication_/localSubFolderUpdateSoftware_);
-    std::cerr << logger() << path.string() << std::endl;
+    boost::filesystem::path path(folderAplication_/localSubFolderUpdateSoftware_/"Application");
+    std::cerr << logger() << "Read updates from: " << path.string() << std::endl;
+
+    if(!boost::filesystem::exists(path))
+    {
+        if(!boost::filesystem::create_directories(path))
+        {
+            std::cerr << logger() << "Can't create directories: " << path.string() << std::endl;
+        }
+    }
 
     for(auto& entry : boost::make_iterator_range(boost::filesystem::directory_iterator(path), {}))
     {
@@ -607,7 +611,7 @@ void updater::fillListUpdateSoftware()
         {
             try
             {
-                /*const auto zipFilename = entry.path().string();
+                const auto zipFilename = entry.path().string();
                 const auto tmpFolder = folderAplication_/localSubFolderUpdateSoftware_/"tmp";
                 boost::filesystem::create_directories(tmpFolder);
                 const auto tmpFile = (tmpFolder/"README.md");
@@ -616,9 +620,8 @@ void updater::fillListUpdateSoftware()
                 std::ifstream in(tmpFile.string().c_str());
                 std::string contents;
                 std::getline(in, contents);
-                std::cerr << logger() << contents <<std::endl;*/
-                //ui.comboBoxUpdateSoftware->insertItem(-1, QIcon(), QString::fromStdString(contents), QString::fromStdString(entry.path().string()));
-                ui.comboBoxUpdateSoftware->addItem(QString::fromStdString(entry.path().filename().string()), QVariant::fromValue<QString>(QString::fromStdString(entry.path().string())));
+                std::cerr << logger() << contents <<std::endl;
+                ui.comboBoxUpdateSoftware->addItem(QString::fromStdString(contents), QVariant::fromValue<QString>(QString::fromStdString(entry.path().string())));
             }
             catch(const std::exception& ex)
             {
@@ -626,6 +629,8 @@ void updater::fillListUpdateSoftware()
             }
         }
     }
+
+    ui.comboBoxUpdateSoftware->setCurrentIndex(-1);
 }
 
 void updater::errorProcessDownloadUpdates( const QString message)
