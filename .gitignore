@@ -20,3 +20,7 @@ UpgradeLog*.*
 *.vcxproj*
 *.rc
 *.pro.*
+moc_*.*
+*.o
+ui_*.*
+screen/screen
