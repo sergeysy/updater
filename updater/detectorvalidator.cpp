@@ -46,9 +46,9 @@ void DetectorValidator::process()
     QString idValidator;
 
     statusPing = getStatusPing(ipString_);
-    const auto result = readSettingsValidator(login_, ipString_, pathSettings, QString::fromStdString(path_.string()));
+    const auto result = readSettingsValidator(login_, ipString_, pathSettings, QString::fromStdString((path_/ipString_.toStdString()).string()));
 
-    const auto pathDest = path_/"settings";
+    const auto pathDest = path_/ipString_.toStdString()/"settings";//TODO на каждый валидатор отдельная папка по IP
     idValidator = getIdValidator(result, pathDest);
     std::cerr << logger() <<"result="<<result<<std::endl;
     const auto timezone = getTimezone(result, pathDest);

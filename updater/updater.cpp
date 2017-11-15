@@ -2,6 +2,8 @@
 
 #include <boost/range/iterator_range.hpp>
 
+#include <QRegExp>
+#include <QSortFilterProxyModel>
 #include <QTimer>
 #include <QThread>
 #include <QPushButton>
@@ -31,6 +33,10 @@ updater::updater(QWidget *parent)
     init();
 	ui.setupUi(this);
     model_ = new ValidatorListModel(this);
+    /*auto sortedModel = new QSortFilterProxyModel;
+    sortedModel->setSourceModel(model_);
+    QRegExp regExp(QString::fromLatin1(R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[\s*])"));
+    sortedModel->setFilterRegExp(regExp);*/
 
     ui.listView->setModel(model_);
     proxy_ = new ValidatorProcessUpdateProxyModel(this);
@@ -143,7 +149,7 @@ void updater::commandUploadTransactions()
 
     const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
     //TODO get folder from settings of validator
-    const QString folderTransactionsOnValidator(QString::fromLatin1("/mnt/sda/transaction"));
+    const QString folderTransactionsOnValidator(QString::fromLatin1("/mnt/dom/transaction"));
     auto model = static_cast<ValidatorListModel*>(ui.listView->model());
     int i;
     for(i = 0; i < model->rowCount(QModelIndex()); ++i)
@@ -265,7 +271,7 @@ void updater::commandUpdateValidator()
 
     const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
     //TODO get folder from settings of validator
-    const QString folderTransactionsOnValidator(QString::fromLatin1("/mnt/sda/transaction"));
+    const QString folderTransactionsOnValidator(QString::fromLatin1("/mnt/dom/transaction"));
     auto model = static_cast<ValidatorListModel*>(ui.listView->model());
     QString pathUploadSoftware;
     if(isNeedUpdateSoftware)
