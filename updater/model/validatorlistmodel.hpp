@@ -15,11 +15,16 @@ public:
     QString getId() const noexcept;
     QString getIP() const noexcept;
     QString getTimezone() const noexcept;
+    QString getConfigVersion() const noexcept;
     void setPercentJob(const int percentJob) noexcept;
     int  getPercentJob() const noexcept;
 
     void setMessageJob(const QString message) noexcept;
     QString getMessageJob() const noexcept;
+    QString getOSVersion() const noexcept;
+    QString getTransactions() const noexcept;
+    QString getMemFree() const noexcept;
+    QString getMemTotal() const noexcept;
 private:
     QString ipString_;
     QString idValidator_;
@@ -42,6 +47,11 @@ public:
         PercentJobRole = Qt::UserRole + 4,
         ChangeIdRole  =  Qt::UserRole + 5,
         TimezoneRole = Qt::UserRole + 6,
+        ConfigVersionRole = Qt::UserRole + 7,
+        OSVersionRole =  Qt::UserRole + 8,
+        TransactionsRole = Qt::UserRole + 9,
+        MemFreeRole = Qt::UserRole + 10,
+        MemTotalRole = Qt::UserRole + 11,
     };
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const; // функция доступа к данным
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;

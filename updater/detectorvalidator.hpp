@@ -34,13 +34,17 @@ private:
     QString login_;
     QString ipString_;
     boost::filesystem::path path_;
+    QProcess *process_;
+    std::string filenameSystemInfo_ = "systeminfo";
 
     QString getIdValidator(const int result, const boost::filesystem::path& folder);
     QString getTimezone(const int result, const boost::filesystem::path& folder);
-
+    int prepareSystemInfo(const QString& login, const QString& ip, const QString& folderSource);
     QString getStatusPing(const QString& ipString);
     int readSettingsValidator(const QString& login, const QString& ip, const QString& folderSource, const QString&  folderDestination);
 
+    QString getSettingValue(const boost::filesystem::path &folder, const std::string &name);
+    void setSystemInfo(QJsonObject &data, const boost::filesystem::path &path);
 public:
     static QString pathSettings;
 };

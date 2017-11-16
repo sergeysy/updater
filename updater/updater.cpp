@@ -362,10 +362,26 @@ void updater::showInfoValidator(const QModelIndex &index)
     const auto ipString = index.data(ValidatorListModel::deviceRole::IPRole).toString();
     const auto idString = index.data(ValidatorListModel::deviceRole::IdRole).toString();
     const auto timezoneString = index.data(ValidatorListModel::deviceRole::TimezoneRole).toString();
+    const auto configVersionString = index.data(ValidatorListModel::deviceRole::ConfigVersionRole).toString();
+    const auto osVersionString = index.data(ValidatorListModel::deviceRole::OSVersionRole).toString();
+    const auto transactionsString = index.data(ValidatorListModel::deviceRole::TransactionsRole).toString();
+    const auto memFreeString = index.data(ValidatorListModel::deviceRole::MemFreeRole).toString();
+    const auto memTotalString = index.data(ValidatorListModel::deviceRole::MemTotalRole).toString();
     ui.pbChangeId->setVisible(idString != DetectorValidator::noValidator);
 
     ui.labelIdValidatorValue->setText(idString);
     ui.labelTimezoneValue->setText(timezoneString);
+    ui.labelVersionSettingsValue->setText(configVersionString);
+    ui.labelVersionOSValue->setText(osVersionString);
+    ui.labelTransactionValue->setText(transactionsString);
+    if(!memTotalString.isEmpty() || !memFreeString.isEmpty())
+    {
+        ui.labelMemoryValue->setText(tr("%1/%2").arg(memTotalString).arg(memFreeString));
+    }
+    else
+    {
+        ui.labelMemoryValue->setText(tr(""));
+    }
 }
 
 void updater::commandUploadTransactionToServer()

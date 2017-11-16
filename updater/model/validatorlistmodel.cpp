@@ -31,6 +31,31 @@ QString Validator::getTimezone() const  noexcept
     return jsonObject_[QString::fromLatin1("timezone")].toString();
 }
 
+QString Validator::getConfigVersion() const noexcept
+{
+    return jsonObject_[QString::fromLatin1("config_version")].toString();
+}
+
+QString Validator::getOSVersion() const noexcept
+{
+    return jsonObject_[QString::fromLatin1("osVersion")].toString();
+}
+
+QString Validator::getTransactions() const noexcept
+{
+    return jsonObject_[QString::fromLatin1("transactions")].toString();
+}
+
+QString Validator::getMemFree() const noexcept
+{
+    return jsonObject_[QString::fromLatin1("memFree")].toString();
+}
+
+QString Validator::getMemTotal() const noexcept
+{
+    return jsonObject_[QString::fromLatin1("memTotal")].toString();
+}
+
 void Validator::setMessageJob(const QString message)  noexcept
 {
     message_ = message;
@@ -99,6 +124,21 @@ QVariant ValidatorListModel::data(const QModelIndex &index, int role) const
         break;
     case TimezoneRole:
         return device.getTimezone();
+        break;
+    case ConfigVersionRole:
+        return device.getConfigVersion();
+        break;
+    case OSVersionRole:
+        return device.getOSVersion();
+        break;
+    case TransactionsRole:
+        return device.getTransactions();
+        break;
+    case MemFreeRole:
+        return device.getMemFree();
+        break;
+    case MemTotalRole:
+        return device.getMemTotal();
         break;
     /*default:
         break;*/
