@@ -1,3 +1,6 @@
+[submodule "submodules/facadeStorageTransactions"]
+	path = submodules/facadeStorageTransactions
+	url = git@git.kartel.com.ru:multipass/valid/facadeStorageTransactions.git
 [submodule "submodules/utils"]
 	path = submodules/utils
 	url = git@git.kartel.com.ru:multipass/valid/utils.git
