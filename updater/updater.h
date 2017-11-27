@@ -22,7 +22,7 @@ public:
 	public slots:
     void commnadFindValidators();
     void commandUploadTransactions();
-    void updateListDevices(const QString ipString, const QJsonObject data);
+    void updateListDevices(const QString ipString, const QJsonObject jsonObject);
     void updateProcessTransactions(int percent, const QString message, const QString idString);
     void finishedTransactions();
 

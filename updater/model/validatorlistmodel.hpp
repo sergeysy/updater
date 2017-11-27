@@ -9,9 +9,12 @@ class Validator
 {
 public:
     Validator(const QString& ipString, const QJsonObject);
+    Validator(){};
     ~Validator();
 
     void setId(const QString& idValidator);
+    void setIP(const QString& ipString);
+    void setJsonObject(const QJsonObject& jsonObject);
     QString getId() const noexcept;
     QString getIP() const noexcept;
     QString getTimezone() const noexcept;
@@ -27,7 +30,7 @@ public:
     QString getMemTotal() const noexcept;
 private:
     QString ipString_;
-    QString idValidator_;
+    //QString idValidator_;
     QJsonObject jsonObject_;
     int percentJob_ = 0;
     QString message_;
@@ -52,17 +55,19 @@ public:
         TransactionsRole = Qt::UserRole + 9,
         MemFreeRole = Qt::UserRole + 10,
         MemTotalRole = Qt::UserRole + 11,
+
     };
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const; // функция доступа к данным
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
     int rowCount(const QModelIndex &parent) const; // количество элементов в модели
     virtual bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
     virtual QModelIndexList	match(const QModelIndex &start, int role, const QVariant &value, int hits = 1, Qt::MatchFlags flags = Qt::MatchFlags( Qt::MatchStartsWith | Qt::MatchWrap )) const override;
+    virtual QModelIndex	index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
 
     void clear();
 
-public slots:
-    void addDevice(Validator device); // добавить контакт в модель
+/*public slots:
+    void addDevice(Validator device); // добавить контакт в модель*/
 
 private:
     QList<Validator> devices_;

@@ -33,12 +33,15 @@ updater::updater(QWidget *parent)
     init();
 	ui.setupUi(this);
     model_ = new ValidatorListModel(this);
-    /*auto sortedModel = new QSortFilterProxyModel;
-    sortedModel->setSourceModel(model_);
-    QRegExp regExp(QString::fromLatin1(R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[\s*])"));
-    sortedModel->setFilterRegExp(regExp);*/
 
-    ui.listView->setModel(model_);
+    auto sortedModel = new QSortFilterProxyModel;
+    QRegExp regExp(QString::fromLatin1(R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[\s*])"));
+    sortedModel->setFilterRegExp(regExp);
+    sortedModel->setSourceModel(model_);
+    sortedModel->setDynamicSortFilter(true);
+
+    //ui.listView->setSortingEnabled(true);
+    ui.listView->setModel(sortedModel);
     proxy_ = new ValidatorProcessUpdateProxyModel(this);
     proxy_->setSourceModel(model_);
     ui.lvStatusValidator->setModel(proxy_);
@@ -62,11 +65,12 @@ void updater::connections()
     ui.infoValidatorWidget->setVisible(false);
 
     connect(ui.pbChangeId, &QPushButton::clicked, this, &updater::commandChangeValidatorId, Qt::QueuedConnection);
-    connect(model_, &ValidatorListModel::dataChanged, proxy_, &ValidatorProcessUpdateProxyModel::dataChanged,Qt::QueuedConnection);
-    connect(model_, &ValidatorListModel::dataChanged, this, &updater::modelDataChanged,Qt::QueuedConnection);
-    connect(model_, &ValidatorListModel::modelReset, this, &updater::modelReseted,Qt::QueuedConnection);
-    connect(model_, &ValidatorListModel::modelReset, proxy_, &ValidatorProcessUpdateProxyModel::modelReset, Qt::QueuedConnection);
-    connect(model_, &ValidatorListModel::rowsInserted, proxy_, &ValidatorProcessUpdateProxyModel::rowsInserted, Qt::QueuedConnection);
+    auto model = ui.listView->model();
+    connect(model, &ValidatorListModel::dataChanged, proxy_, &ValidatorProcessUpdateProxyModel::dataChanged,Qt::QueuedConnection);
+    connect(model, &ValidatorListModel::dataChanged, this, &updater::modelDataChanged,Qt::QueuedConnection);
+    connect(model, &ValidatorListModel::modelReset, this, &updater::modelReseted,Qt::QueuedConnection);
+    connect(model, &ValidatorListModel::modelReset, proxy_, &ValidatorProcessUpdateProxyModel::modelReset, Qt::QueuedConnection);
+    connect(model, &ValidatorListModel::rowsInserted, proxy_, &ValidatorProcessUpdateProxyModel::rowsInserted, Qt::QueuedConnection);
 
     connect(ui.pbDownloadUpdates, &QPushButton::clicked, this, &updater::commandDownloadUpdates, Qt::QueuedConnection);
 }
@@ -115,8 +119,17 @@ void updater::commnadFindValidators()
         std::swap(ipEnd, ipStart);
     }
 
-    auto model = static_cast<ValidatorListModel*>(ui.listView->model());
-    model->clear();
+    /*auto model = static_cast<ValidatorListModel*>(ui.listView->model());
+    if(model)
+    {
+        model->clear();
+    }
+    else
+    {
+        std::cerr << logger() << "Model view is NULL" << std::endl;
+    }*/
+    auto model = (ui.listView->model());
+    model->removeRows(0, model->rowCount());
 
 
     emit stopAll();
@@ -150,12 +163,17 @@ void updater::commandUploadTransactions()
     const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
     //TODO get folder from settings of validator
     const QString folderTransactionsOnValidator(QString::fromLatin1("/mnt/dom/transaction"));
-    auto model = static_cast<ValidatorListModel*>(ui.listView->model());
+    auto model = (ui.listView->model());
+    if(!model)
+    {
+        std::cerr << logger() << "Can't upload transactions: Model is NULL." << std::endl;
+        return;
+    }
     int i;
     for(i = 0; i < model->rowCount(QModelIndex()); ++i)
     {
-        const auto ipString = model->index(i).data(ValidatorListModel::deviceRole::IPRole).toString();
-        const auto idString = model->index(i).data(ValidatorListModel::deviceRole::IdRole).toString();
+        const auto ipString = model->index(i,0).data(ValidatorListModel::deviceRole::IPRole).toString();
+        const auto idString = model->index(i,0).data(ValidatorListModel::deviceRole::IdRole).toString();
         bool isValidId = false;
         idString.toLong(&isValidId, 10);
         if(!isValidId)
@@ -224,10 +242,21 @@ void updater::updateProcessTransactions(int percent, const QString message, cons
     }
 }
 
-void updater::updateListDevices(const QString ipString, const QJsonObject data)
+void updater::updateListDevices(const QString ipString, const QJsonObject jsonObject)
 {
-    auto model = static_cast<ValidatorListModel*>(ui.listView->model());
-    model->addDevice(Validator(ipString, data));
+    auto model = (ui.listView->model());
+
+    //model->addDevice(Validator(ipString, data));
+
+    QModelIndex index;// = model->createIndex(model->rowCount(), 0);
+    model->insertRow(model->rowCount(), index);
+    model->setData(index, ipString, ValidatorListModel::deviceRole::IPRole);
+    auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::IPRole, ipString);
+    for(auto& item : list)
+    {
+        model->setData(item, jsonObject, ValidatorListModel::deviceRole::DisplayRole);
+    }
+    //model->setData(index, data, ValidatorListModel::deviceRole::DisplayRole);
 
     const auto value = countQueryIp_.fetchAndAddAcquire(-1);
     if( 1 == value)
@@ -299,15 +328,15 @@ void updater::commandUpdateValidator()
     const auto percent = 0;
     for(int i = 0; i < model->rowCount(QModelIndex()); ++i)
     {
-        const auto ipString = model->index(i).data(ValidatorListModel::deviceRole::IPRole).toString();
-        const auto idString = model->index(i).data(ValidatorListModel::deviceRole::IdRole).toString();
+        const auto ipString = model->index(i,0).data(ValidatorListModel::deviceRole::IPRole).toString();
+        const auto idString = model->index(i,0).data(ValidatorListModel::deviceRole::IdRole).toString();
 
         QJsonObject jsonObject;
         jsonObject.insert(tr("message"), tr("Update software"));
         jsonObject.insert(tr("percent"), percent);
         jsonObject.insert(tr("ip"), ipString);
 
-        model->setData(model->index(i), percent, ValidatorListModel::deviceRole::UpdatePercentJobRole);
+        model->setData(model->index(i,0), percent, ValidatorListModel::deviceRole::UpdatePercentJobRole);
         bool isValidId = false;
         idString.toLong(&isValidId, 10);
         if(!isValidId)
@@ -477,7 +506,7 @@ void updater::commandChangeValidatorId()
         const auto exitCode = process_->execute(QString::fromLatin1("scp"), paramsScp);*/
         boost::filesystem::path pathSettings = boost::filesystem::path(DetectorValidator::pathSettings.toStdString()).parent_path();
         const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
-        /*const auto changeIdCommandParams = QString::fromLatin1("%1@%2 \"mkdir -p %3 && echo %4 > %5\"")
+        /*const auto changeIdCommandParams = QString::fromLatin1("%1@%2 \"mkdir -p %3 && \"echo %4 > %5\"\"")
                 .arg(login)
                 .arg(ipString)
                 .arg(QString::fromStdString(pathSettings.string()))
@@ -487,19 +516,18 @@ void updater::commandChangeValidatorId()
         const auto changeIdCommandParams =
                 QStringList()
                 << QString::fromLatin1("%1@%2").arg(login).arg(ipString)
-                   //<<QString::fromLatin1("exit")
-                   <<QString::fromLatin1("mkdir -p %1 && echo %2 > %3")
-                     .arg(QString::fromStdString(pathSettings.string()))
-                     .arg(idString)
+                   <<QString::fromLatin1("\"mkdir -p %1 && echo %2 > %1/client_id\"")
                      .arg(DetectorValidator::pathSettings)
+                     .arg(idString)
+                     //.arg(DetectorValidator::pathSettings)
                 ;
         //int exitCode = process_->write(changeIdCommand.c_str());
         std::cerr << logger() << "ssh " << changeIdCommandParams.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-        int exitCode = process_->execute(QString::fromLatin1("ssh"), changeIdCommandParams);
-        //int exitCode = process_->execute(QString::fromLatin1("ssh")+changeIdCommandParams.join(QString::fromLatin1(" ")));
+        //int exitCode = process_->execute(QString::fromLatin1("ssh"), changeIdCommandParams);
+        int exitCode = process_->execute(QString::fromLatin1("ssh ")+changeIdCommandParams.join(QString::fromLatin1(" ")));
         if (exitCode != 0)
         {
-            std::cerr << logger() << "ERROR execute: ssh "<< changeIdCommandParams.join(QString::fromLatin1(" ")).toStdString()<< " status error code: "<< exitCode << std::endl;
+            std::cerr << logger() << "ERROR execute: ssh "<< changeIdCommandParams.join(QString::fromLatin1("_")).toStdString()<< " status error code: "<< exitCode << std::endl;
             // indicate can not set id validator
             return ;
         }

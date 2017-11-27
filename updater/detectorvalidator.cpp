@@ -52,7 +52,7 @@ void DetectorValidator::process()
     statusPing = getStatusPing(ipString_);
 
     const auto result = readSettingsValidator(login_, ipString_, pathSettings, QString::fromStdString((path_/ipString_.toStdString()).string()));
-    const auto pathDest = path_/ipString_.toStdString()/"settings";//TODO на каждый валидатор отдельная папка по IP
+    const auto pathDest = path_/ipString_.toStdString();
     idValidator = getIdValidator(result, pathDest);
     std::cerr << logger() <<"result="<<result<<std::endl;
     const auto timezone = getTimezone(result, pathDest);
@@ -204,11 +204,11 @@ int DetectorValidator::readSettingsValidator(const QString& login, const QString
     //ssh-keygen -f "/home/savin/.ssh/known_hosts" -R 10.25.153.15
     //ssh-keyscan -t ecdsa 10.25.153.15 >> ~/.ssh/known_hosts
 
-    auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1 >> ~/.ssh/known_hosts").arg(ip);
+    auto updateKey = QString::fromLatin1("\"ssh-keyscan -t ecdsa %1 >> ~/.ssh/known_hosts\"").arg(ip);
     //auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1").arg(ip);
     process_->setProgram(QString::fromLatin1("/bin/bash"));
     process_->start();
-    std::cout << logger() << "Update host" <<std::endl;
+    std::cout << logger() << "Update host: " << updateKey.toStdString()<<std::endl;
     int exitCode = process_->write(updateKey.toStdString().c_str());
     if (exitCode <= 0)
     {
@@ -234,6 +234,10 @@ int DetectorValidator::readSettingsValidator(const QString& login, const QString
 
     std::cout << logger() << "copy settings validator" <<std::endl;
     boost::filesystem::path pathDestination(folderDestination.toStdString());
+    if(boost::filesystem::is_directory(pathDestination) && boost::filesystem::exists(pathDestination))
+    {
+        boost::filesystem::remove_all(pathDestination);
+    }
     if(boost::filesystem::is_directory(pathDestination) && !boost::filesystem::exists(pathDestination))
     {
         if(!boost::filesystem::create_directories(pathDestination))

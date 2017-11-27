@@ -6,7 +6,7 @@
 
 Validator::Validator(const QString& ipString, const QJsonObject data)
     : ipString_(ipString)
-    , idValidator_(data[QString::fromLatin1("idValidator")].toString())
+    //, idValidator_(data[QString::fromLatin1("idValidator")].toString())
     , jsonObject_(data)
 {
 
@@ -18,7 +18,7 @@ Validator::~Validator()
 
 QString Validator::getId() const  noexcept
 {
-    return idValidator_;
+    return jsonObject_[QString::fromLatin1("idValidator")].toString();//idValidator_;
 }
 
 QString Validator::getIP() const  noexcept
@@ -78,7 +78,17 @@ int Validator::getPercentJob() const noexcept
 
 void Validator::setId(const QString& idValidator)
 {
-    idValidator_ = idValidator;
+    jsonObject_[QString::fromLatin1("idValidator")] = idValidator;
+}
+
+void Validator::setIP(const QString& ipString)
+{
+    ipString_ = ipString;
+}
+
+void Validator::setJsonObject(const QJsonObject &jsonObject)
+{
+    jsonObject_ = jsonObject;
 }
 
 
@@ -150,10 +160,34 @@ QVariant ValidatorListModel::data(const QModelIndex &index, int role) const
 bool ValidatorListModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     const auto indexRow = index.row();
-    if ( indexRow < 0 || indexRow > devices_.count())
+    std::cerr<<logger() << __FILE__<< " " << __LINE__ << "index="  << indexRow <<std::endl;
+    if ((role != IPRole) && ( indexRow < 0 || indexRow > devices_.count()))
         return false;
 
-    switch (role) {
+    std::cerr<<logger() << __FILE__<< " " << __LINE__ <<std::endl;
+    switch (role)
+    {
+    case IPRole:
+        {
+        std::cerr<<logger() << __FILE__<< " " << __LINE__ <<std::endl;
+            /*Validator& device = devices_[indexRow];
+            device.setIP(value.toString());
+            emit dataChanged(index, index);*/
+            Validator device;
+            device.setIP(value.toString());
+            beginInsertRows(QModelIndex(), rowCount(QModelIndex()), rowCount(QModelIndex()));
+            devices_<<device;
+            endInsertRows();
+        }
+        break;
+    case DisplayRole:
+        {
+        std::cerr<<logger() << __FILE__<< " " << __LINE__ <<std::endl;
+            Validator& device = devices_[indexRow];
+            device.setJsonObject(value.toJsonObject());
+            emit dataChanged(index, index);
+        }
+        break;
     case UpdatePercentJobRole:
     {
         Validator& device = devices_[indexRow];
@@ -191,12 +225,12 @@ bool ValidatorListModel::setData(const QModelIndex &index, const QVariant &value
 
     return false;
 }
-void ValidatorListModel::addDevice(Validator device)
+/*void ValidatorListModel::addDevice(Validator device)
 {
     beginInsertRows(QModelIndex(), rowCount(QModelIndex()), rowCount(QModelIndex()));
     devices_ << device;
     endInsertRows();
-}
+}*/
 
 int ValidatorListModel::rowCount(const QModelIndex &parent) const
 {
@@ -262,12 +296,20 @@ QModelIndexList ValidatorListModel::match(const QModelIndex &start, int role, co
     return list;
 }
 
-void ValidatorListModel::clear()
+QModelIndex ValidatorListModel::index(int row, int column, const QModelIndex &parent) const
+{
+    if(parent.isValid() || row > devices_.size())
+           return QModelIndex();
+
+    return createIndex(row, column);
+}
+
+/*void ValidatorListModel::clear()
 {
     beginResetModel();
     devices_.clear();
     endResetModel();
-}
+}*/
 
 ValidatorProcessUpdateProxyModel::ValidatorProcessUpdateProxyModel(QObject *parent)
   : QAbstractProxyModel(parent)
