@@ -86,12 +86,12 @@ LIBS += -L"$(BOOST_ROOT)/lib/x32/lib"
 }
 
 unix {
-LIBS += -lboost_system
-LIBS += -lboost_filesystem
-LIBS += -lboost_date_time
-LIBS += -lboost_thread
-LIBS += -lboost_regex
-LIBS += -lboost_program_options
+LIBS += -l:libboost_system.a
+LIBS += -l:libboost_filesystem.a
+LIBS += -l:libboost_date_time.a
+LIBS += -l:libboost_thread.a
+LIBS += -l:libboost_regex.a
+LIBS += -l:libboost_program_options.a
 LIBS += -lcurl
 }
 
