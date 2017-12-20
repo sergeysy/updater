@@ -3,8 +3,7 @@ SUBDIRS += \
     submodules/utils/utils.pro \
     submodules/transport/transport.pro \
     submodules/facadeStorageTransactions/facadeStorageTransactions.pro \
-    updater/updater.pro \
-    screen
+    updater/updater.pro
 
 CONFIG += ordered
 

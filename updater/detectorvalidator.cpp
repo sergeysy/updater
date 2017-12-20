@@ -217,7 +217,7 @@ int DetectorValidator::readSettingsValidator(const QString& login, const QString
     }
 
     //"ssh -q root@10.25.153.16 exit"
-    const auto checkConnectionParams = QStringList() << QString::fromLatin1("-q") << QString::fromLatin1("%1@%2").arg(login).arg(ip)<< QString::fromLatin1("echo");
+    const auto checkConnectionParams = QStringList()<<QString::fromLatin1("-oStrictHostKeyChecking=no")  << QString::fromLatin1("-q") << QString::fromLatin1("%1@%2").arg(login).arg(ip)<< QString::fromLatin1("echo");
     std::cerr << logger() << "ssh " <<  checkConnectionParams.join(QString::fromLatin1(" ")).toStdString() << std::endl;
     exitCode = process_->execute(QString::fromLatin1("ssh"), checkConnectionParams);
     if(exitCode != 0)
