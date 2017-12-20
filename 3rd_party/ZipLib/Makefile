@@ -1,7 +1,7 @@
 # Final names of binaries
 #EXECUTABLE = Bin/zipsample
 SO_LIBRARY = Bin/libzip.a
-
+LIBS =
 # C & C++ compiler
 CC       = gcc
 CXX      = g++-6
@@ -39,7 +39,7 @@ all: $(EXECUTABLE) $(SO_LIBRARY)
 #$(SO_LIBRARY): $(OBJS)
 #	$(CXX) $(LDFLAGS) -shared -o $@ $^
 $(SO_LIBRARY): $(OBJS)
-	ar rvc $(SO_LIBRARY) $(OBJS) -o $@ $^
+	ar rcs $(SO_LIBRARY) $(OBJS) $(LIBS) $@ $^
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
