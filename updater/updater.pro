@@ -5,8 +5,6 @@ TARGET = updater
 CONFIG += c++14
 # QMAKE_CXXFLAGS += -std=c++14
 
-unix:!macx: LIBS += -L$$ROOT_DIR/3rd_party/ZipLib/Bin/ -l:libzip.a
-
 INCLUDEPATH += $$ROOT_DIR/3rd_party/ZipLib/Source/ZipLib
 DEPENDPATH += $$ROOT_DIR/3rd_party/ZipLib/Source
 
@@ -85,6 +83,7 @@ LIBS += -L"$(BOOST_ROOT)/lib/x32/lib"
 
 }
 
+unix:!macx: LIBS += -L$$ROOT_DIR/3rd_party/ZipLib/Bin/ -l:libzip.a
 unix {
 LIBS += -l:libboost_system.a
 LIBS += -l:libboost_filesystem.a
