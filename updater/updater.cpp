@@ -35,12 +35,15 @@ updater::updater(QWidget *parent)
     model_ = new ValidatorListModel(this);
 
     auto sortedModel = new QSortFilterProxyModel;
-    QRegExp regExp(QString::fromLatin1(R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[\s*])"));
-    sortedModel->setFilterRegExp(regExp);
     sortedModel->setSourceModel(model_);
+    /*QRegExp regExp(QString::fromLatin1(R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[\s*])"));
+    sortedModel->setFilterRegExp(regExp);
+    */
     sortedModel->setDynamicSortFilter(true);
+    sortedModel->setSortRole(ValidatorListModel::deviceRole::IPRole);
+    sortedModel->invalidate();
 
-    //ui.listView->setSortingEnabled(true);
+    //sortedModel->setSortingEnabled(true);
     ui.listView->setModel(sortedModel);
     proxy_ = new ValidatorProcessUpdateProxyModel(this);
     proxy_->setSourceModel(model_);
