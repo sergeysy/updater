@@ -34,13 +34,13 @@ updater::updater(QWidget *parent)
 	ui.setupUi(this);
     model_ = new ValidatorListModel(this);
 
-    auto sortedModel = new QSortFilterProxyModel;
-    QRegExp regExp(QString::fromLatin1(R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[\s*])"));
-    sortedModel->setFilterRegExp(regExp);
+    auto sortedModel = new QSortFilterProxyModel(this);
     sortedModel->setSourceModel(model_);
-    sortedModel->setDynamicSortFilter(true);
 
-    //ui.listView->setSortingEnabled(true);
+    sortedModel->setDynamicSortFilter(true);
+    sortedModel->setSortRole(ValidatorListModel::deviceRole::IPRole);
+    sortedModel->invalidate();
+
     ui.listView->setModel(sortedModel);
     proxy_ = new ValidatorProcessUpdateProxyModel(this);
     proxy_->setSourceModel(model_);
@@ -53,7 +53,6 @@ updater::updater(QWidget *parent)
 void updater::connections()
 {
     connect(ui.pbProcessValidators, &QPushButton::clicked, this, &updater::commnadFindValidators, Qt::QueuedConnection);
-    //connect(ui.pbServiceValidators, &QPushButton::clicked, this, &updater::serviceValidators, Qt::QueuedConnection);
     connect(ui.listView, &QListView::clicked, this, &updater::showInfoValidator, Qt::QueuedConnection);
     connect(ui.pbUploadTransactionToServer, &QPushButton::clicked, this, &updater::commandUploadTransactionToServer, Qt::QueuedConnection);
 
@@ -119,15 +118,6 @@ void updater::commnadFindValidators()
         std::swap(ipEnd, ipStart);
     }
 
-    /*auto model = static_cast<ValidatorListModel*>(ui.listView->model());
-    if(model)
-    {
-        model->clear();
-    }
-    else
-    {
-        std::cerr << logger() << "Model view is NULL" << std::endl;
-    }*/
     auto model = (ui.listView->model());
     model->removeRows(0, model->rowCount());
 
@@ -185,7 +175,6 @@ void updater::commandUploadTransactions()
         const QString folderDestination(QString::fromStdString(pathDestination.string()));
         Transactions *transactionProcess = new Transactions(login, ipString, idString, folderTransactionsOnValidator, folderDestination);
 
-
         QThread* thread = new QThread;
         transactionProcess->moveToThread(thread);
 
@@ -220,7 +209,6 @@ void updater::commandUploadTransactions()
 
 void updater::updateProcessTransactions(int percent, const QString message, const QString ipString)
 {
-    //auto model = static_cast<ValidatorListModel*>(ui.listView->model());
     auto model = ui.listView->model();
     if(model == nullptr)
     {
@@ -246,17 +234,15 @@ void updater::updateListDevices(const QString ipString, const QJsonObject jsonOb
 {
     auto model = (ui.listView->model());
 
-    //model->addDevice(Validator(ipString, data));
-
     QModelIndex index;// = model->createIndex(model->rowCount(), 0);
     model->insertRow(model->rowCount(), index);
     model->setData(index, ipString, ValidatorListModel::deviceRole::IPRole);
+    model->sort(0);
     auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::IPRole, ipString);
     for(auto& item : list)
     {
         model->setData(item, jsonObject, ValidatorListModel::deviceRole::DisplayRole);
     }
-    //model->setData(index, data, ValidatorListModel::deviceRole::DisplayRole);
 
     const auto value = countQueryIp_.fetchAndAddAcquire(-1);
     if( 1 == value)
@@ -268,7 +254,6 @@ void updater::updateListDevices(const QString ipString, const QJsonObject jsonOb
         ui.pbProcessValidators->setEnabled(true);
         ui.pbProcessValidators->setText(tr("Process transactions"));
         ui.pbProcessValidators->adjustSize();
-
     }
 }
 
@@ -292,9 +277,6 @@ void updater::commandUpdateValidator()
     ui.pbProcessValidators->setEnabled(false);
     ui.pbProcessValidators->setText(tr("Process upload"));
 
-    {
-        //ui.lvStatusValidator->setVisible(false);
-    }
     const auto isNeedUpdateSoftware = ui.comboBoxUpdateSoftware->currentIndex()!=-1;
     const auto isNeedUploadWhitelist = ui.comboBoxUpdateWhitelist->currentIndex()!=-1;
 
@@ -497,22 +479,8 @@ void updater::commandChangeValidatorId()
         process_->setProgram(QString::fromLatin1("/bin/bash"));
         process_->start();
 
-        /*QString sourceFile;
-
-        const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
-        const auto paramsScp = QStringList() << QString::fromLatin1("-r") << QString::fromLatin1("%1").arg(sourceFile)
-                                             <<QString::fromLatin1("%1@%2:%3").arg(login).arg(ipString).arg(DetectorValidator::client_id);
-        std::cerr << logger() << "scp " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-        const auto exitCode = process_->execute(QString::fromLatin1("scp"), paramsScp);*/
         boost::filesystem::path pathSettings = boost::filesystem::path(DetectorValidator::pathSettings.toStdString()).parent_path();
         const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
-        /*const auto changeIdCommandParams = QString::fromLatin1("%1@%2 \"mkdir -p %3 && \"echo %4 > %5\"\"")
-                .arg(login)
-                .arg(ipString)
-                .arg(QString::fromStdString(pathSettings.string()))
-                .arg(idString)
-                .arg(DetectorValidator::pathClient_id)
-                ;*/
         const auto changeIdCommandParams =
                 QStringList()
                 << QString::fromLatin1("-oStrictHostKeyChecking=no")
@@ -522,9 +490,7 @@ void updater::commandChangeValidatorId()
                      .arg(idString)
                      //.arg(DetectorValidator::pathSettings)
                 ;
-        //int exitCode = process_->write(changeIdCommand.c_str());
         std::cerr << logger() << "ssh " << changeIdCommandParams.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-        //int exitCode = process_->execute(QString::fromLatin1("ssh"), changeIdCommandParams);
         int exitCode = process_->execute(QString::fromLatin1("ssh ")+changeIdCommandParams.join(QString::fromLatin1(" ")));
         if (exitCode != 0)
         {
@@ -556,19 +522,7 @@ void updater::updateStatusDetecting()
         QString status(tr("Detecting validators"));
         static int i = 0;
         i++;
-        switch (i%4) {
-        case 1:
-            status += QString::fromLatin1(".");
-            break;
-        case 2:
-            status += QString::fromLatin1("..");
-            break;
-        case 3:
-            status += QString::fromLatin1("...");
-            break;
-        default:
-            break;
-        }
+        status += QString::fromStdString(std::string((size_t)(i%4),(char)('.')));
         ui.labelStatusDetect->setText(status);
     }
 }
@@ -598,11 +552,6 @@ void updater::commandDownloadUpdates()
 {
     const std::string filenameDownloadScript("download_updates.sh");
     const auto scriptFilename = folderAplication_/"scripts"/filenameDownloadScript;
-    /*if(boost::filesystem::exists(scriptFilename) && boost::filesystem::is_regular_file(scriptFilename))
-    {
-        std::cerr << logger() << "Not found script: " << scriptFilename.string() << std::endl;
-        return;
-    }*/
 
     ui.pbProcessValidators->setEnabled(false);
     ui.pbDownloadUpdates->setEnabled(false);
@@ -694,9 +643,7 @@ void updater::errorProcessDownloadUpdates( const QString message)
 
 void updater::updateInfoValidator(const QString& idValidator)
 {
-    //std::cerr << logger() << ui.labelIdValidatorValue->text().toStdString() << std::endl;
     ui.labelIdValidatorValue->setText(idValidator);
-    //std::cerr << logger() << ui.labelIdValidatorValue->text().toStdString() << std::endl;
 }
 
 void updater::loadTranslate()

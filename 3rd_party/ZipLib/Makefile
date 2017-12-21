@@ -1,7 +1,7 @@
 # Final names of binaries
-EXECUTABLE = Bin/zipsample
-SO_LIBRARY = Bin/libzip.so
-
+#EXECUTABLE = Bin/zipsample
+SO_LIBRARY = Bin/libzip.a
+LIBS =
 # C & C++ compiler
 CC       = gcc
 CXX      = g++-6
@@ -33,11 +33,13 @@ OBJS = \
 # Rules
 all: $(EXECUTABLE) $(SO_LIBRARY)
 
-$(EXECUTABLE): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) Source/Sample/Main.cpp -o $@ $^
+#$(EXECUTABLE): $(OBJS)
+#	$(CXX) $(CXXFLAGS) $(LDFLAGS) Source/Sample/Main.cpp -o $@ $^
 
+#$(SO_LIBRARY): $(OBJS)
+#	$(CXX) $(LDFLAGS) -shared -o $@ $^
 $(SO_LIBRARY): $(OBJS)
-	$(CXX) $(LDFLAGS) -shared -o $@ $^
+	ar rcs $(SO_LIBRARY) $(OBJS) $(LIBS) $@ $^
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
