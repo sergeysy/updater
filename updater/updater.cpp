@@ -515,6 +515,7 @@ void updater::commandChangeValidatorId()
                 ;*/
         const auto changeIdCommandParams =
                 QStringList()
+                << QString::fromLatin1("-oStrictHostKeyChecking=no")
                 << QString::fromLatin1("%1@%2").arg(login).arg(ipString)
                    <<QString::fromLatin1("\"mkdir -p %1 && echo %2 > %1/client_id\"")
                      .arg(DetectorValidator::pathSettings)
@@ -527,7 +528,7 @@ void updater::commandChangeValidatorId()
         int exitCode = process_->execute(QString::fromLatin1("ssh ")+changeIdCommandParams.join(QString::fromLatin1(" ")));
         if (exitCode != 0)
         {
-            std::cerr << logger() << "ERROR execute: ssh "<< changeIdCommandParams.join(QString::fromLatin1("_")).toStdString()<< " status error code: "<< exitCode << std::endl;
+            std::cerr << logger() << "ERROR execute: ssh "<< changeIdCommandParams.join(QString::fromLatin1(" ")).toStdString()<< " status error code: "<< exitCode << std::endl;
             // indicate can not set id validator
             return ;
         }
