@@ -34,7 +34,7 @@ updater::updater(QWidget *parent)
 	ui.setupUi(this);
     model_ = new ValidatorListModel(this);
 
-    auto sortedModel = new QSortFilterProxyModel;
+    auto sortedModel = new QSortFilterProxyModel(this);
     sortedModel->setSourceModel(model_);
     /*QRegExp regExp(QString::fromLatin1(R"(^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[\s*])"));
     sortedModel->setFilterRegExp(regExp);
@@ -254,6 +254,7 @@ void updater::updateListDevices(const QString ipString, const QJsonObject jsonOb
     QModelIndex index;// = model->createIndex(model->rowCount(), 0);
     model->insertRow(model->rowCount(), index);
     model->setData(index, ipString, ValidatorListModel::deviceRole::IPRole);
+    model->sort(0);
     auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::IPRole, ipString);
     for(auto& item : list)
     {
