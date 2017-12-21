@@ -60,7 +60,7 @@ private:
     QString pathSourceSoftware_;
     QString pathSourceWhitelist_;
 
-    QString pathUpdateSoftware_ = QString::fromLatin1("~/updater");
+    QString pathUpdateSoftware_ = QString::fromLatin1("/home/updater/updates");
     QString pathDestinationWhitelist_ = QString::fromLatin1("/mnt/dom");
     QProcess* process_;
 

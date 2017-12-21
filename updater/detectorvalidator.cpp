@@ -217,7 +217,7 @@ int DetectorValidator::readSettingsValidator(const QString& login, const QString
     }
 
     //"ssh -q root@10.25.153.16 exit"
-    const auto checkConnectionParams = QStringList() << QString::fromLatin1("-q") << QString::fromLatin1("%1@%2").arg(login).arg(ip)<< QString::fromLatin1("echo");
+    const auto checkConnectionParams = QStringList()<<QString::fromLatin1("-oStrictHostKeyChecking=no")  << QString::fromLatin1("-q") << QString::fromLatin1("%1@%2").arg(login).arg(ip)<< QString::fromLatin1("echo");
     std::cerr << logger() << "ssh " <<  checkConnectionParams.join(QString::fromLatin1(" ")).toStdString() << std::endl;
     exitCode = process_->execute(QString::fromLatin1("ssh"), checkConnectionParams);
     if(exitCode != 0)
@@ -247,7 +247,7 @@ int DetectorValidator::readSettingsValidator(const QString& login, const QString
         }
     }
 
-    const auto params = QStringList() << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login).arg(ip).arg(folderSource)<<QString::fromLatin1("%1").arg(folderDestination);
+    const auto params = QStringList()<<QString::fromLatin1("-oStrictHostKeyChecking=no") << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login).arg(ip).arg(folderSource)<<QString::fromLatin1("%1").arg(folderDestination);
     std::cerr << "scp " <<  params.join(QString::fromLatin1(" ")).toStdString() << std::endl;
     exitCode = process_->execute(QString::fromLatin1("scp"), params);
     if(exitCode != 0)
@@ -283,7 +283,7 @@ int DetectorValidator::prepareSystemInfo(const QString& login, const QString& ip
      uname -or; egrep 'MemTotal|MemFree' /proc/meminfo; ls /mnt/dom/transaction -1 | wc -l
      */
 //ssh root@10.25.153.15 "exec > /validator/settings/systeminfo;uname -or && egrep 'MemTotal|MemFree' /proc/meminfo && ls /mnt/dom/transaction -1 | wc -l"
-    auto params = QStringList()<< QString::fromLatin1("%1@%2").arg(login).arg(ip)
+    auto params = QStringList()<< QString::fromLatin1("-oStrictHostKeyChecking=no") << QString::fromLatin1("%1@%2").arg(login).arg(ip)
                  << QString::fromLatin1("exec > %1/%2;uname -or &&  grep -E 'MemTotal|MemFree' /proc/meminfo | grep -oE '[0-9]+.*' && ls /mnt/dom/transaction -1 | wc -l")
                     .arg(folderSource).arg(QString::fromStdString(filenameSystemInfo_));
     std::cerr << logger() << "System info: ssh " << params.join(QString::fromLatin1(" ")).toStdString() << std::endl;
