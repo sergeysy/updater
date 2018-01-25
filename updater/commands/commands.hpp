@@ -11,7 +11,7 @@ class Transactions : public QObject
 {
     Q_OBJECT
 public:
-    Transactions(const QString& login, const QString& ipString, const QString& idString, const QString &sourceFolder, const QString &destFolder);
+    Transactions(const QString& scriptFileName, const QString& login, const QString& ipString, const QString& idString, const QString &sourceFolder, const QString &destFolder);
     virtual ~Transactions();
 
 public slots:
@@ -24,6 +24,7 @@ signals:
     void updateProcess(int percent, const QString message, const QString ipString);
 
 private:
+    QString scriptFileName_;
     QString login_;
     QString ipString_;
     QString idString_;

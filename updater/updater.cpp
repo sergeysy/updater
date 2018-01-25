@@ -173,7 +173,12 @@ void updater::commandUploadTransactions()
         }
         const auto pathDestination = folderAplication_/folderTransactionStore_/idString.toStdString();
         const QString folderDestination(QString::fromStdString(pathDestination.string()));
-        Transactions *transactionProcess = new Transactions(login, ipString, idString, folderTransactionsOnValidator, folderDestination);
+        Transactions *transactionProcess = new Transactions(QString::fromStdString((folderAplication_/"scripts"/"move-transactions.sh").string())
+                                                            ,login
+                                                            , ipString
+                                                            , idString
+                                                            , folderTransactionsOnValidator
+                                                            , folderDestination);
 
         QThread* thread = new QThread;
         transactionProcess->moveToThread(thread);

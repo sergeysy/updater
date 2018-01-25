@@ -4,12 +4,14 @@
 #include "commands.hpp"
 
 Transactions::Transactions(
+        const QString& scriptFileName,
         const QString &login,
         const QString &ipString,
         const QString& idString,
         const QString& sourceFolder,
         const QString& destFolder)
     : QObject(nullptr)
+    , scriptFileName_(scriptFileName)
     , login_(login)
     , ipString_(ipString)
     , idString_(idString)
@@ -57,45 +59,13 @@ void Transactions::process()
 
     emit updateProcess(10, message, ipString_);
     std::cerr << logger() << "Copy transactions..." <<std::endl;
-    boost::filesystem::path pathDestination(destFolder_.toStdString());
-    /*if(
-            //boost::filesystem::is_directory(pathDestination) &&
-            !boost::filesystem::exists(pathDestination))
-    {
-        if(!boost::filesystem::create_directories(pathDestination))
-        {
-            const auto message = tr("Can not create \"%1\".").arg(QString::fromStdString(pathDestination.string()));
-            std::cerr << logger() << message.toStdString() << std::endl;
-            emit error(ipString_, message);
-            return;
-        }
-    }
-    emit updateProcess(25, message, ipString_);*/
-    std::cerr << logger() << pathDestination.string() << std::endl;
-    const auto paramsScp = QStringList()<<QString::fromLatin1("-oStrictHostKeyChecking=no") << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login_).arg(ipString_).arg(sourceFolder_)<<QString::fromLatin1("%1").arg(destFolder_);
-    std::cerr << logger() << "scp " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-    exitCode = process_->execute(QString::fromLatin1("scp"), paramsScp);
+
+    const auto paramsScp = QStringList() << login_ <<ipString_ << destFolder_;
+    std::cerr << logger() << "script " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+    exitCode = process_->execute(scriptFileName_, paramsScp);
     if(exitCode != 0)
     {
         QString message(tr("Fail copy transactions from %1. Error '%2'.").arg(idString_).arg(exitCode));
-        std::cerr << logger() << message.toStdString() << std::endl;
-        emit error(ipString_, message);
-        return;
-    }
-    message = tr("Delete data");
-    emit updateProcess(50, message, ipString_);
-
-    //ssh username@domain.com 'rm /some/where/some_file.war'
-    //const auto paramsRemove = QStringList() << QString::fromLatin1("%1@%2").arg(login_).arg(ipString_)<<QString::fromLatin1("'rm %1/*'").arg(sourceFolder_);
-    //std::cerr << logger() << "ssh " <<  paramsRemove.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-    //exitCode = process->execute(QString::fromLatin1("ssh"), paramsRemove);
-    const auto paramsRemove = QStringList() << QString::fromLatin1("ssh -oStrictHostKeyChecking=no %1@%2").arg(login_).arg(ipString_)<<QString::fromLatin1("rm -f %1/*").arg(sourceFolder_);
-    const auto commanadRemoveTransactions = paramsRemove.join(QString::fromLatin1(" ")).toStdString();
-    std::cerr << logger() << commanadRemoveTransactions << std::endl;
-    exitCode = process_->write(commanadRemoveTransactions.c_str());
-    if(exitCode < 0)
-    {
-        QString message(tr("Fail remove transactions from %1. Error '%2'.").arg(idString_).arg(exitCode));
         std::cerr << logger() << message.toStdString() << std::endl;
         emit error(ipString_, message);
         return;
