@@ -195,7 +195,7 @@ QString DetectorValidator::getStatusPing(const QString& ipString)
     }
     return statusPing;
 }
-int DetectorValidator::readSettingsValidator(const QString& login, const QString& ip, const QString& folderSource, const QString&  folderDestination)
+int DetectorValidator::readSettingsValidator(const QString& login, const QString& ip, const QString& folderSource, const QString&  /*folderDestination*/)
 {
 #if defined(unix)
     //linux
@@ -232,7 +232,7 @@ int DetectorValidator::readSettingsValidator(const QString& login, const QString
         std::cerr << logger() << "Fail get system info validator" << std::endl;
     }
 
-    std::cout << logger() << "copy settings validator" <<std::endl;
+   /* std::cout << logger() << "copy settings validator" <<std::endl;
     boost::filesystem::path pathDestination(folderDestination.toStdString());
     if(boost::filesystem::is_directory(pathDestination) && boost::filesystem::exists(pathDestination))
     {
@@ -253,7 +253,7 @@ int DetectorValidator::readSettingsValidator(const QString& login, const QString
     if(exitCode != 0)
     {
         std::cerr << logger() << "Fail copy settings validator" << std::endl;
-    }
+    }*/
 
     return exitCode;
 #endif //end LINUX
@@ -277,7 +277,7 @@ int DetectorValidator::readSettingsValidator(const QString& login, const QString
 
 }
 
-int DetectorValidator::prepareSystemInfo(const QString& login, const QString& ip, const QString& folderSource)
+int DetectorValidator::prepareSystemInfo(const QString& login, const QString& ip, const QString& /*folderSource*/)
 {
     /*
      uname -or; egrep 'MemTotal|MemFree' /proc/meminfo; ls /mnt/dom/transaction -1 | wc -l
@@ -292,10 +292,10 @@ int DetectorValidator::prepareSystemInfo(const QString& login, const QString& ip
     {
         std::cerr << logger() << "Fail get system info validator" << std::endl;
     }*/
-    const std::string filenameGetSystemInfoScript("getSystemInfoScript.sh");
+    const std::string filenameGetSystemInfoScript("getSystemInfo.sh");
     const auto scriptFilename = folderAplication_/"scripts"/filenameGetSystemInfoScript;
 
-    auto params = QStringList()<< login<<ip<<folderSource;
+    auto params = QStringList()<< login<<ip<<QString::fromStdString(folderAplication_.string());
     std::cerr << logger() << "System info: ssh " << params.join(QString::fromLatin1(" ")).toStdString() << std::endl;
     auto exitCode = process_->execute(QString::fromStdString(scriptFilename.string()), params);
     if(exitCode != 0)
