@@ -27,7 +27,6 @@ Transactions::~Transactions()
 
 void Transactions::process()
 {
-#if defined(unix)
     auto f = [this]()
     {
         emit finished();
@@ -41,21 +40,6 @@ void Transactions::process()
     connect(process_, &QProcess::readyReadStandardError, this, &Transactions::readyReadStandardError, Qt::QueuedConnection);
     connect(process_, &QProcess::readyReadStandardOutput, this, &Transactions::readyReadStandardOutput, Qt::QueuedConnection);
     connect(process_, &QProcess::stateChanged, this, &Transactions::stateChanged, Qt::QueuedConnection);
-
-    auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1 >> ~/.ssh/known_hosts").arg(ipString_);
-    //auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1").arg(ip);
-    process_->setProgram(QString::fromLatin1("/bin/bash"));
-    process_->start();
-    std::cout << logger() << "Update host" <<std::endl;
-        int exitCode = process_->write(updateKey.toStdString().c_str());
-        if (exitCode <= 0)
-        {
-            const auto message = tr("ERROR execute: %1.").arg(updateKey);
-            std::cerr << logger() << message.toStdString() << std::endl;
-            emit error(ipString_, message);
-            return;
-        }
-    //int exitCode = process->execute(updateKey);
 
     emit updateProcess(10, message, ipString_);
     std::cerr << logger() << "Copy transactions..." <<std::endl;
@@ -72,10 +56,6 @@ void Transactions::process()
     }
     message = tr("Finished");
     emit updateProcess(100, message, ipString_);
-
-#else
-#error Not implemented upload transactions from validator on this platform
-#endif
 }
 
 void Transactions::stateChanged(QProcess::ProcessState /*newState*/)
