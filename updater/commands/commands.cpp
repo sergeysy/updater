@@ -58,7 +58,9 @@ void Transactions::process()
     emit updateProcess(10, message, ipString_);
     std::cerr << logger() << "Copy transactions..." <<std::endl;
     boost::filesystem::path pathDestination(destFolder_.toStdString());
-    if(/*boost::filesystem::is_directory(pathDestination) &&*/ !boost::filesystem::exists(pathDestination))
+    /*if(
+            //boost::filesystem::is_directory(pathDestination) &&
+            !boost::filesystem::exists(pathDestination))
     {
         if(!boost::filesystem::create_directories(pathDestination))
         {
@@ -68,7 +70,7 @@ void Transactions::process()
             return;
         }
     }
-    emit updateProcess(25, message, ipString_);
+    emit updateProcess(25, message, ipString_);*/
     std::cerr << logger() << pathDestination.string() << std::endl;
     const auto paramsScp = QStringList()<<QString::fromLatin1("-oStrictHostKeyChecking=no") << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login_).arg(ipString_).arg(sourceFolder_)<<QString::fromLatin1("%1").arg(destFolder_);
     std::cerr << logger() << "scp " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
