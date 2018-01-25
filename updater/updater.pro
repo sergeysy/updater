@@ -2,7 +2,7 @@ TEMPLATE = app
 VERSION = 1.0.0.0
 
 TARGET = updater
-CONFIG += c++14
+CONFIG += c++17
 # QMAKE_CXXFLAGS += -std=c++14
 
 INCLUDEPATH += $$ROOT_DIR/3rd_party/ZipLib/Source/ZipLib

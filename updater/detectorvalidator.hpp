@@ -33,7 +33,7 @@ signals:
 private:
     QString login_;
     QString ipString_;
-    boost::filesystem::path path_;
+    boost::filesystem::path folderAplication_;
     QProcess *process_;
     std::string filenameSystemInfo_ = "systeminfo";
 

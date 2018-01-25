@@ -39,7 +39,7 @@ DetectorValidator& DetectorValidator::setIp(const QString& ipString)
 }
 DetectorValidator& DetectorValidator::setPath(const boost::filesystem::path& path)
 {
-    path_ = path;
+    folderAplication_ = path;
     return *this;
 }
 
@@ -51,8 +51,8 @@ void DetectorValidator::process()
     process_ = new QProcess();
     statusPing = getStatusPing(ipString_);
 
-    const auto result = readSettingsValidator(login_, ipString_, pathSettings, QString::fromStdString((path_/ipString_.toStdString()).string()));
-    const auto pathDest = path_/ipString_.toStdString();
+    const auto result = readSettingsValidator(login_, ipString_, pathSettings, QString::fromStdString((folderAplication_/ipString_.toStdString()).string()));
+    const auto pathDest = folderAplication_/ipString_.toStdString();
     idValidator = getIdValidator(result, pathDest);
     std::cerr << logger() <<"result="<<result<<std::endl;
     const auto timezone = getTimezone(result, pathDest);
@@ -283,11 +283,21 @@ int DetectorValidator::prepareSystemInfo(const QString& login, const QString& ip
      uname -or; egrep 'MemTotal|MemFree' /proc/meminfo; ls /mnt/dom/transaction -1 | wc -l
      */
 //ssh root@10.25.153.15 "exec > /validator/settings/systeminfo;uname -or && egrep 'MemTotal|MemFree' /proc/meminfo && ls /mnt/dom/transaction -1 | wc -l"
-    auto params = QStringList()<< QString::fromLatin1("-oStrictHostKeyChecking=no") << QString::fromLatin1("%1@%2").arg(login).arg(ip)
+    /*auto params = QStringList()<< QString::fromLatin1("-oStrictHostKeyChecking=no") << QString::fromLatin1("%1@%2").arg(login).arg(ip)
                  << QString::fromLatin1("exec > %1/%2;uname -or &&  grep -E 'MemTotal|MemFree' /proc/meminfo | grep -oE '[0-9]+.*' && ls /mnt/dom/transaction -1 | wc -l")
                     .arg(folderSource).arg(QString::fromStdString(filenameSystemInfo_));
     std::cerr << logger() << "System info: ssh " << params.join(QString::fromLatin1(" ")).toStdString() << std::endl;
     auto exitCode = process_->execute(QString::fromLatin1("ssh"), params);
+    if(exitCode != 0)
+    {
+        std::cerr << logger() << "Fail get system info validator" << std::endl;
+    }*/
+    const std::string filenameGetSystemInfoScript("getSystemInfoScript.sh");
+    const auto scriptFilename = folderAplication_/"scripts"/filenameGetSystemInfoScript;
+
+    auto params = QStringList()<< login<<ip<<folderSource;
+    std::cerr << logger() << "System info: ssh " << params.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+    auto exitCode = process_->execute(QString::fromStdString(scriptFilename.string()), params);
     if(exitCode != 0)
     {
         std::cerr << logger() << "Fail get system info validator" << std::endl;
