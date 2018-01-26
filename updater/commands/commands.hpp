@@ -38,13 +38,13 @@ private:
     const QString finishMessage_;
     const QString errorMessage_;
 
-
-
     QProcess *process_;
 private slots:
     void readyReadStandardError();
     void readyReadStandardOutput();
     void stateChanged(QProcess::ProcessState /*newState*/);
+    void finishedScriptExecute(int exitCode,
+                               QProcess::ExitStatus);
 };
 
 
