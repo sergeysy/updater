@@ -120,7 +120,8 @@ QString DetectorValidator::getIdValidator(const int result, const boost::filesys
 
     return idValidator;
 }
-QString DetectorValidator::getSettingValue(const boost::filesystem::path& folder, const std::string& name)
+QString DetectorValidator::getSettingValue(const boost::filesystem::path& folder,
+                                           const std::string& name)
 {
 #if defined(unix)
     auto  destinationFile = folder/ name;
@@ -138,11 +139,12 @@ QString DetectorValidator::getSettingValue(const boost::filesystem::path& folder
     std::cerr<<logger()<< name <<"="<<value.toStdString()<<std::endl;
     return value;
 #else //end LINUX
-    #error Not implemented upload transactions from validator on this platform
+    #error Not implemented on this platform
 #endif
 }
 
-QString DetectorValidator::getTimezone(const int result, const boost::filesystem::path& folder)
+QString DetectorValidator::getTimezone(const int result,
+                                       const boost::filesystem::path& folder)
 {
 #if defined(unix)
     std::cerr<<logger() << __FUNCTION__<<std::endl;
@@ -169,7 +171,7 @@ QString DetectorValidator::getTimezone(const int result, const boost::filesystem
     std::cerr<<logger()<<"timezone="<<timezone.toStdString()<<std::endl;
     return timezone;
 #else //end LINUX
-    #error Not implemented upload transactions from validator on this platform
+    #error Not implemented on this platform
 #endif
 }
 
@@ -195,7 +197,10 @@ QString DetectorValidator::getStatusPing(const QString& ipString)
     }
     return statusPing;
 }
-int DetectorValidator::readSettingsValidator(const QString& login, const QString& ip, const QString& folderSource, const QString&  /*folderDestination*/)
+int DetectorValidator::readSettingsValidator(const QString& login,
+                                             const QString& ip,
+                                             const QString& folderSource,
+                                             const QString&  /*folderDestination*/)
 {
 #if defined(unix)
     //linux
@@ -232,29 +237,6 @@ int DetectorValidator::readSettingsValidator(const QString& login, const QString
         std::cerr << logger() << "Fail get system info validator" << std::endl;
     }
 
-   /* std::cout << logger() << "copy settings validator" <<std::endl;
-    boost::filesystem::path pathDestination(folderDestination.toStdString());
-    if(boost::filesystem::is_directory(pathDestination) && boost::filesystem::exists(pathDestination))
-    {
-        boost::filesystem::remove_all(pathDestination);
-    }
-    if(boost::filesystem::is_directory(pathDestination) && !boost::filesystem::exists(pathDestination))
-    {
-        if(!boost::filesystem::create_directories(pathDestination))
-        {
-            std::cerr << logger() << "Can not create \""<< pathDestination.string() << "\"" << std::endl;
-            return -1;
-        }
-    }
-
-    const auto params = QStringList()<<QString::fromLatin1("-oStrictHostKeyChecking=no") << QString::fromLatin1("-r") << QString::fromLatin1("%1@%2:%3").arg(login).arg(ip).arg(folderSource)<<QString::fromLatin1("%1").arg(folderDestination);
-    std::cerr << "scp " <<  params.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-    exitCode = process_->execute(QString::fromLatin1("scp"), params);
-    if(exitCode != 0)
-    {
-        std::cerr << logger() << "Fail copy settings validator" << std::endl;
-    }*/
-
     return exitCode;
 #endif //end LINUX
 
@@ -277,7 +259,9 @@ int DetectorValidator::readSettingsValidator(const QString& login, const QString
 
 }
 
-int DetectorValidator::prepareSystemInfo(const QString& login, const QString& ip, const QString& /*folderSource*/)
+int DetectorValidator::prepareSystemInfo(const QString& login,
+                                         const QString& ip,
+                                         const QString& /*folderSource*/)
 {
     /*
      uname -or; egrep 'MemTotal|MemFree' /proc/meminfo; ls /mnt/dom/transaction -1 | wc -l
@@ -306,7 +290,8 @@ int DetectorValidator::prepareSystemInfo(const QString& login, const QString& ip
     return exitCode;
 }
 
-void DetectorValidator::setSystemInfo(QJsonObject& data, const boost::filesystem::path& path)
+void DetectorValidator::setSystemInfo(QJsonObject& data,
+                                      const boost::filesystem::path& path)
 {
 
     try
@@ -345,6 +330,6 @@ void DetectorValidator::setSystemInfo(QJsonObject& data, const boost::filesystem
     }
     catch(const boost::filesystem::filesystem_error & e)
     {
-
+        std::cerr<<logger()<<e.what()<<std::endl;
     }
 }

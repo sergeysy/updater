@@ -22,8 +22,11 @@ public:
 	public slots:
     void commnadFindValidators();
     void commandUploadTransactions();
-    void updateListDevices(const QString ipString, const QJsonObject jsonObject);
-    void updateProcessTransactions(int percent, const QString message, const QString idString);
+    void updateListDevices(const QString ipString,
+                           const QJsonObject jsonObject);
+    void updateProcessTransactions(int percent,
+                                   const QString message,
+                                   const QString idString);
     void finishedTransactions();
 
     void commandUpdateValidator();
@@ -59,10 +62,15 @@ private:
     std::string folderTransactionStore_ = "transactions";
     std::string localSubFolderUpdateSoftware_ = "updates";
     QSettings *settings_;
-    QString getIdValidator(const QString& login, const QString& ipString, const boost::filesystem::path& folder);
+    QString getIdValidator(const QString& login,
+                           const QString& ipString,
+                           const boost::filesystem::path& folder);
 
     /*If the process cannot be started, -2 is returned. If the process crashes, -1 is returned. Otherwise, the process' exit code is returned.*/
-	int readIdValidator(const QString& login, const QString& ip, const QString& file, const QString&  fileDestination);
+    int readIdValidator(const QString& login,
+                        const QString& ip,
+                        const QString& file,
+                        const QString& fileDestination);
 
     QAtomicInt countQueryIp_;
     QTimer *timerDetecting_;
@@ -70,7 +78,8 @@ private:
     bool haveError_ = false;
 
     void setStateFindValidator();
-    void modelUpdateId(const QString& idString, const QString ipString);
+    void modelUpdateId(const QString& idString,
+                       const QString &ipString);
 
     void updateInfoValidator(const QString &idValidator);
     void fillListUpdateSoftware();
@@ -78,13 +87,29 @@ private:
     std::shared_ptr<QTranslator> myTranslator;
     void loadTranslate();
 
+    bool extractDataDevice(const QModelIndex& index,
+                           QString &ipString,
+                           QString &idString);
+    void createTransactionProcess(const QString &login,
+                                  const QString &ipString,
+                                  const QString &idString);
+
+    void createUploadSoftwareProcess(const QString &login,
+                                     const QString &ipString,
+                                     const QString &idString,
+                                     const QString &pathUploadSoftware,
+                                     const QString &pathUploadWhitelist);
+
 private slots:
     void updateStatusDetecting();
-    void modelDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles = QVector<int>());
+    void modelDataChanged(const QModelIndex &topLeft,
+                          const QModelIndex &bottomRight,
+                          const QVector<int> &roles = QVector<int>());
     void modelReseted();
 
     void commandDownloadUpdates();
-    void updateProcessDownloadUpdates(int percent, const QString message);
+    void updateProcessDownloadUpdates(int percent,
+                                      const QString message);
     void finishedDownloadUpdates();
     void errorProcessDownloadUpdates( const QString message);
 };

@@ -24,8 +24,11 @@ public slots:
 
 signals:
     void finished();
-    void error(const QString, const QString);
-    void updateProcess(int percent, const QString message, const QString ipString);
+    void error(const QString,
+               const QString);
+    void updateProcess(int percent,
+                       const QString message,
+                       const QString ipString);
 
 private:
     QString fileNameScript_;
@@ -49,7 +52,11 @@ class Upload : public QObject
 {
     Q_OBJECT
 public:
-    Upload(const QString &login, const QString &ipString, const QString &idString, const QString &pathSourceSoftware, const QString &pathSourceWhitelist);
+    Upload(const QString &login,
+           const QString &ipString,
+           const QString &idString,
+           const QString &pathSourceSoftware,
+           const QString &pathSourceWhitelist);
     virtual ~Upload();
 
 public slots:
@@ -58,8 +65,11 @@ public slots:
 
 signals:
     void finished();
-    void error(const QString idString, const QString message);
-    void updateProcess(int percent, const QString message, const QString ipString);
+    void error(const QString idString,
+               const QString message);
+    void updateProcess(int percent,
+                       const QString message,
+                       const QString ipString);
 
 private:
     QString login_;
@@ -75,7 +85,8 @@ private:
 
     void mkDirOnValidator(const QString& path);
 
-    void copy(const QString &sourceFile, const QString &destFolder);
+    void copy(const QString &sourceFile,
+              const QString &destFolder);
     void installIpk(const QString &pathIpk);
 
     void copyWhitelist();

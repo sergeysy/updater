@@ -26,6 +26,7 @@ public:
 public slots:
     void process();
     void stop();
+
 signals:
     void haveData(const QString ipString, const QJsonObject data);
     void finished();
@@ -37,14 +38,23 @@ private:
     QProcess *process_;
     std::string filenameSystemInfo_ = "systeminfo";
 
-    QString getIdValidator(const int result, const boost::filesystem::path& folder);
-    QString getTimezone(const int result, const boost::filesystem::path& folder);
-    int prepareSystemInfo(const QString& login, const QString& ip, const QString& folderSource);
+    QString getIdValidator(const int result,
+                           const boost::filesystem::path& folder);
+    QString getTimezone(const int result,
+                        const boost::filesystem::path& folder);
+    int prepareSystemInfo(const QString& login,
+                          const QString& ip,
+                          const QString& folderSource);
     QString getStatusPing(const QString& ipString);
-    int readSettingsValidator(const QString& login, const QString& ip, const QString& folderSource, const QString&  folderDestination);
+    int readSettingsValidator(const QString& login,
+                              const QString& ip,
+                              const QString& folderSource,
+                              const QString& folderDestination);
 
-    QString getSettingValue(const boost::filesystem::path &folder, const std::string &name);
-    void setSystemInfo(QJsonObject &data, const boost::filesystem::path &path);
+    QString getSettingValue(const boost::filesystem::path &folder,
+                            const std::string &name);
+    void setSystemInfo(QJsonObject &data,
+                       const boost::filesystem::path &path);
 public:
     static QString pathSettings;
 };

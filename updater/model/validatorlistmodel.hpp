@@ -57,17 +57,25 @@ public:
         MemTotalRole = Qt::UserRole + 11,
 
     };
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const; // функция доступа к данным
-    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+    QVariant data(const QModelIndex &index,
+                  int role = Qt::DisplayRole) const; // функция доступа к данным
+    bool setData(const QModelIndex &index,
+                 const QVariant &value,
+                 int role = Qt::EditRole) override;
     int rowCount(const QModelIndex &parent) const; // количество элементов в модели
-    virtual bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
-    virtual QModelIndexList	match(const QModelIndex &start, int role, const QVariant &value, int hits = 1, Qt::MatchFlags flags = Qt::MatchFlags( Qt::MatchStartsWith | Qt::MatchWrap )) const override;
-    virtual QModelIndex	index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
+    virtual bool removeRows(int row,
+                            int count,
+                            const QModelIndex &parent = QModelIndex()) override;
+    virtual QModelIndexList	match(const QModelIndex &start,
+                                  int role,
+                                  const QVariant &value,
+                                  int hits = 1,
+                                  Qt::MatchFlags flags = Qt::MatchFlags( Qt::MatchStartsWith | Qt::MatchWrap )) const override;
+    virtual QModelIndex	index(int row,
+                              int column,
+                              const QModelIndex &parent = QModelIndex()) const override;
 
     void clear();
-
-/*public slots:
-    void addDevice(Validator device); // добавить контакт в модель*/
 
 private:
     QList<Validator> devices_;
@@ -84,14 +92,14 @@ Q_OBJECT
             const QModelIndex& proxyIndex) const;
 
     virtual QModelIndex index(int, int,
-        const QModelIndex& parent = QModelIndex()) const;
+                              const QModelIndex& parent = QModelIndex()) const;
     virtual QModelIndex parent(const QModelIndex& index) const;
     virtual int rowCount(const QModelIndex& parent) const;
     virtual int columnCount(const QModelIndex& parent) const;
     virtual QVariant data(const QModelIndex& index,
-            int role = Qt::DisplayRole) const;
+                          int role = Qt::DisplayRole) const;
 
     virtual QVariant headerData(int section,
-            Qt::Orientation orientation,
-            int role = Qt::DisplayRole) const;
+                                Qt::Orientation orientation,
+                                int role = Qt::DisplayRole) const;
 };

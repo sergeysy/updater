@@ -151,49 +151,24 @@ void updater::commandUploadTransactions()
     ui.pbProcessValidators->setEnabled(false);
 
     const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
-    //TODO get folder from settings of validator
-    const QString folderTransactionsOnValidator(QString::fromLatin1("/mnt/dom/transaction"));
     auto model = (ui.listView->model());
     if(!model)
     {
         std::cerr << logger() << "Can't upload transactions: Model is NULL." << std::endl;
         return;
     }
-    int i;
-    for(i = 0; i < model->rowCount(QModelIndex()); ++i)
+
+    const auto rowCount = model->rowCount(QModelIndex());
+    QString ipString;
+    QString idString;
+    for(auto i = 0; i < rowCount; ++i)
     {
-        const auto ipString = model->index(i,0).data(ValidatorListModel::deviceRole::IPRole).toString();
-        const auto idString = model->index(i,0).data(ValidatorListModel::deviceRole::IdRole).toString();
-        bool isValidId = false;
-        idString.toLong(&isValidId, 10);
-        if(!isValidId)
+        if(extractDataDevice(model->index(i,0), ipString, idString) == false)
         {
             std::cerr << logger() << "Skip get transactions from " << ipString.toStdString() << std::endl;
             continue;
         }
-        const auto pathDestination = folderAplication_/folderTransactionStore_/idString.toStdString();
-        const QString folderDestination(QString::fromStdString(pathDestination.string()));
-        ScriptExecute *transactionProcess = new ScriptExecute(QString::fromStdString((folderAplication_/"scripts"/"move-transactions.sh").string())
-                                                      , QStringList()<< login << ipString << folderDestination
-                                                      , ipString
-                                                      , tr("Copy transactions...")
-                                                      , tr("Finished")
-                                                      , tr("Fail copy transactions"));
-
-        QThread* thread = new QThread;
-        transactionProcess->moveToThread(thread);
-
-        connect(thread, &QThread::started, transactionProcess, &ScriptExecute::process, Qt::QueuedConnection);
-        connect(transactionProcess, &ScriptExecute::error, this, &updater::errorProcess, Qt::QueuedConnection);
-        connect(transactionProcess, &ScriptExecute::updateProcess, this, &updater::updateProcessTransactions, Qt::QueuedConnection);
-        connect(transactionProcess, &ScriptExecute::finished, thread, &QThread::quit, Qt::QueuedConnection);
-        connect(transactionProcess, &ScriptExecute::finished, this, &updater::finishedTransactions, Qt::QueuedConnection);
-        //connect(this, &updater::stopAll, transactionProcess, &Script::stop, Qt::QueuedConnection);
-        connect(transactionProcess, &ScriptExecute::finished, transactionProcess, &ScriptExecute::deleteLater, Qt::QueuedConnection);
-        connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
-
-        thread->start();
-        countQueryIp_.fetchAndAddAcquire(1);
+        createTransactionProcess(login, ipString, idString);
     }
 
     if(countQueryIp_.fetchAndAddAcquire(0) == 0)
@@ -212,7 +187,49 @@ void updater::commandUploadTransactions()
     }
 }
 
-void updater::updateProcessTransactions(int percent, const QString message, const QString ipString)
+bool updater::extractDataDevice(const QModelIndex& index,
+                                QString& ipString,
+                                QString& idString)
+{
+    ipString = index.data(ValidatorListModel::deviceRole::IPRole).toString();
+    idString = index.data(ValidatorListModel::deviceRole::IdRole).toString();
+    bool isValidId = false;
+    idString.toLong(&isValidId, 10);
+
+    return isValidId;
+}
+void updater::createTransactionProcess(const QString& login,
+                                       const QString& ipString,
+                                       const QString& idString)
+{
+    const auto pathDestination = folderAplication_/folderTransactionStore_/idString.toStdString();
+    const QString folderDestination(QString::fromStdString(pathDestination.string()));
+    ScriptExecute *transactionProcess = new ScriptExecute(QString::fromStdString((folderAplication_/"scripts"/"move-transactions.sh").string())
+                                                  , QStringList()<< login << ipString << folderDestination
+                                                  , ipString
+                                                  , tr("Copy transactions...")
+                                                  , tr("Finished")
+                                                  , tr("Fail copy transactions"));
+
+    QThread* thread = new QThread;
+    transactionProcess->moveToThread(thread);
+
+    connect(thread, &QThread::started, transactionProcess, &ScriptExecute::process, Qt::QueuedConnection);
+    connect(transactionProcess, &ScriptExecute::error, this, &updater::errorProcess, Qt::QueuedConnection);
+    connect(transactionProcess, &ScriptExecute::updateProcess, this, &updater::updateProcessTransactions, Qt::QueuedConnection);
+    connect(transactionProcess, &ScriptExecute::finished, thread, &QThread::quit, Qt::QueuedConnection);
+    connect(transactionProcess, &ScriptExecute::finished, this, &updater::finishedTransactions, Qt::QueuedConnection);
+    //connect(this, &updater::stopAll, transactionProcess, &Script::stop, Qt::QueuedConnection);
+    connect(transactionProcess, &ScriptExecute::finished, transactionProcess, &ScriptExecute::deleteLater, Qt::QueuedConnection);
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
+
+    thread->start();
+    countQueryIp_.fetchAndAddAcquire(1);
+}
+
+void updater::updateProcessTransactions(int percent,
+                                        const QString message,
+                                        const QString ipString)
 {
     auto model = ui.listView->model();
     if(model == nullptr)
@@ -224,9 +241,9 @@ void updater::updateProcessTransactions(int percent, const QString message, cons
     jsonObject.insert(tr("percent"), percent);
     jsonObject.insert(tr("ip"), ipString);
 
-    QJsonDocument doc(jsonObject);
+    /*QJsonDocument doc(jsonObject);
     QString strJson(QString::fromLatin1(doc.toJson(QJsonDocument::Compact)));
-    //std::cerr << logger() << "json: " << strJson.toStdString() << std::endl;
+    std::cerr << logger() << "json: " << strJson.toStdString() << std::endl;*/
 
     auto list = model->match(model->index(0, 0), ValidatorListModel::deviceRole::IPRole, ipString);
     for(auto& item : list)
@@ -235,11 +252,12 @@ void updater::updateProcessTransactions(int percent, const QString message, cons
     }
 }
 
-void updater::updateListDevices(const QString ipString, const QJsonObject jsonObject)
+void updater::updateListDevices(const QString ipString,
+                                const QJsonObject jsonObject)
 {
     auto model = (ui.listView->model());
 
-    QModelIndex index;// = model->createIndex(model->rowCount(), 0);
+    QModelIndex index;
     model->insertRow(model->rowCount(), index);
     model->setData(index, ipString, ValidatorListModel::deviceRole::IPRole);
     model->sort(0);
@@ -286,8 +304,6 @@ void updater::commandUpdateValidator()
     const auto isNeedUploadWhitelist = ui.comboBoxUpdateWhitelist->currentIndex()!=-1;
 
     const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
-    //TODO get folder from settings of validator
-    const QString folderTransactionsOnValidator(QString::fromLatin1("/mnt/dom/transaction"));
     auto model = static_cast<ValidatorListModel*>(ui.listView->model());
     QString pathUploadSoftware;
     if(isNeedUpdateSoftware)
@@ -318,10 +334,10 @@ void updater::commandUpdateValidator()
         const auto ipString = model->index(i,0).data(ValidatorListModel::deviceRole::IPRole).toString();
         const auto idString = model->index(i,0).data(ValidatorListModel::deviceRole::IdRole).toString();
 
-        QJsonObject jsonObject;
+        /*QJsonObject jsonObject;
         jsonObject.insert(tr("message"), tr("Update software"));
         jsonObject.insert(tr("percent"), percent);
-        jsonObject.insert(tr("ip"), ipString);
+        jsonObject.insert(tr("ip"), ipString);*/
 
         model->setData(model->index(i,0), percent, ValidatorListModel::deviceRole::UpdatePercentJobRole);
         bool isValidId = false;
@@ -331,23 +347,33 @@ void updater::commandUpdateValidator()
             std::cerr << logger() << "Skip upload to " << ipString.toStdString() << std::endl;
             continue;
         }
-        Upload *uploadProcess = new Upload(login, ipString, idString, pathUploadSoftware, pathUploadWhitelist);
-
-        QThread* thread = new QThread;
-        uploadProcess->moveToThread(thread);
-
-        connect(thread, &QThread::started, uploadProcess, &Upload::process, Qt::QueuedConnection);
-        connect(uploadProcess, &Upload::updateProcess, this, &updater::updateProcessTransactions, Qt::QueuedConnection);
-        connect(uploadProcess, &Upload::error, this, &updater::errorProcess, Qt::QueuedConnection);
-        connect(uploadProcess, &Upload::finished, thread, &QThread::quit, Qt::QueuedConnection);
-        connect(uploadProcess, &Upload::finished, this, &updater::finishedUpdateValidator, Qt::QueuedConnection);
-        connect(this, &updater::stopAll, uploadProcess, &Upload::stop, Qt::QueuedConnection);
-        connect(uploadProcess, &Upload::finished, uploadProcess, &Upload::deleteLater, Qt::QueuedConnection);
-        connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
-
-        thread->start();
-        countQueryIp_.fetchAndAddAcquire(1);
+        createUploadSoftwareProcess(login, ipString, idString, pathUploadSoftware, pathUploadWhitelist);
     }
+}
+
+void updater::createUploadSoftwareProcess(
+        const QString& login,
+        const QString& ipString,
+        const QString& idString,
+        const QString& pathUploadSoftware,
+        const QString& pathUploadWhitelist)
+{
+    Upload *uploadProcess = new Upload(login, ipString, idString, pathUploadSoftware, pathUploadWhitelist);
+
+    QThread* thread = new QThread;
+    uploadProcess->moveToThread(thread);
+
+    connect(thread, &QThread::started, uploadProcess, &Upload::process, Qt::QueuedConnection);
+    connect(uploadProcess, &Upload::updateProcess, this, &updater::updateProcessTransactions, Qt::QueuedConnection);
+    connect(uploadProcess, &Upload::error, this, &updater::errorProcess, Qt::QueuedConnection);
+    connect(uploadProcess, &Upload::finished, thread, &QThread::quit, Qt::QueuedConnection);
+    connect(uploadProcess, &Upload::finished, this, &updater::finishedUpdateValidator, Qt::QueuedConnection);
+    connect(this, &updater::stopAll, uploadProcess, &Upload::stop, Qt::QueuedConnection);
+    connect(uploadProcess, &Upload::finished, uploadProcess, &Upload::deleteLater, Qt::QueuedConnection);
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
+
+    thread->start();
+    countQueryIp_.fetchAndAddAcquire(1);
 }
 
 void updater::setStateFindValidator()
@@ -450,7 +476,8 @@ void updater::commandUploadTransactionToServer()
     }
 }
 
-void updater::errorProcess(const QString ipString, const QString message)
+void updater::errorProcess(const QString ipString,
+                           const QString message)
 {
     std::ignore = ipString;
     ui.labelStatusDetect->setText(message);
@@ -500,7 +527,8 @@ void updater::commandChangeValidatorId()
     }
 }
 
-void updater::modelUpdateId(const QString& idString, const QString ipString)
+void updater::modelUpdateId(const QString& idString,
+                            const QString& ipString)
 {
     auto model = ui.listView->model();
     if(model == nullptr)
@@ -525,7 +553,9 @@ void updater::updateStatusDetecting()
     }
 }
 
-void updater::modelDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles)
+void updater::modelDataChanged(const QModelIndex &topLeft,
+                               const QModelIndex &bottomRight,
+                               const QVector<int> &roles)
 {
     auto currentIndex = ui.listView->currentIndex();
     if(topLeft.row() != bottomRight.row()
@@ -579,7 +609,8 @@ void updater::commandDownloadUpdates()
     thread->start();
 }
 
-void updater::updateProcessDownloadUpdates(int percent, const QString message)
+void updater::updateProcessDownloadUpdates(int percent,
+                                           const QString message)
 {
     ui.labelStatusDetect->setText(tr("%1 %2%").arg(message).arg(percent));
 }

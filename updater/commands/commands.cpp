@@ -37,7 +37,8 @@ void Upload::mkDirOnValidator(const QString& path)
     }
 }
 
-void Upload::copy(const QString& sourceFile, const QString& destFolder)
+void Upload::copy(const QString& sourceFile,
+                  const QString& destFolder)
 {
     std::cerr<<logger()<<"Start copy..."<<std::endl;
     const auto pathFile(sourceFile.toStdString());
