@@ -205,17 +205,16 @@ void ScriptExecute::process()
         connect(process_, &QProcess::readyReadStandardError, this, &ScriptExecute::readyReadStandardError, Qt::QueuedConnection);
         connect(process_, &QProcess::readyReadStandardOutput, this, &ScriptExecute::readyReadStandardOutput, Qt::QueuedConnection);
         connect(process_, &QProcess::stateChanged, this, &ScriptExecute::stateChanged, Qt::QueuedConnection);
-        connect(process_, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(finished(int,QProcess::ExitStatus)), Qt::QueuedConnection);
+
         std::cerr << logger() << fileNameScript_.toStdString() << " " <<  paramsScript_.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-        /*const auto exitCode = process_->start(fileNameScript_, paramsScript_);
+        const auto exitCode = process_->execute(fileNameScript_, paramsScript_);
         if(exitCode != 0)
         {
             QString message(tr("%1: %3. Error code '%2'.").arg(ipString_).arg(exitCode).arg(errorMessage_));
             std::cerr << logger() << message.toStdString() << std::endl;
             emit error(ipString_, message);
             return;
-        }*/
-        process_->waitForFinished();
+        }
         auto buf1= process_->readAllStandardOutput();
         auto buf2 = process_->readAllStandardError();
         emit updateProcess(100, finishMessage_, ipString_);
@@ -251,16 +250,4 @@ void ScriptExecute::readyReadStandardOutput()
 void ScriptExecute::stateChanged(QProcess::ProcessState)
 {
     std::cout << "111111111111: " << QString::fromLatin1(process_->readAllStandardOutput()).toStdString();
-}
-
-void ScriptExecute::finishedScriptExecute(int exitCode,
-                                          QProcess::ExitStatus exitStatus)
-{
-    if(exitCode != 0 && exitStatus != QProcess::NormalExit)
-    {
-        QString message(tr("%1: %3. Error code '%2'.").arg(ipString_).arg(exitCode).arg(errorMessage_));
-        std::cerr << logger() << message.toStdString() << std::endl;
-        emit error(ipString_, message);
-        return;
-    }
 }
