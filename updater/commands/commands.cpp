@@ -3,81 +3,6 @@
 
 #include "commands.hpp"
 
-Transactions::Transactions(
-        const QString& scriptFileName,
-        const QString &login,
-        const QString &ipString,
-        const QString& idString,
-        const QString& sourceFolder,
-        const QString& destFolder)
-    : QObject(nullptr)
-    , scriptFileName_(scriptFileName)
-    , login_(login)
-    , ipString_(ipString)
-    , idString_(idString)
-    , sourceFolder_(sourceFolder)
-    , destFolder_(destFolder)
-{
-
-}
-
-Transactions::~Transactions()
-{
-}
-
-void Transactions::process()
-{
-    auto f = [this]()
-    {
-        emit finished();
-    };
-    AutoCall0 autoCallFinished(std::bind(f));
-
-    auto message = tr("Copy data");
-    emit updateProcess(0, message, ipString_);
-    process_ = new QProcess();
-    process_->setProcessChannelMode(QProcess::ForwardedChannels);
-    connect(process_, &QProcess::readyReadStandardError, this, &Transactions::readyReadStandardError, Qt::QueuedConnection);
-    connect(process_, &QProcess::readyReadStandardOutput, this, &Transactions::readyReadStandardOutput, Qt::QueuedConnection);
-    connect(process_, &QProcess::stateChanged, this, &Transactions::stateChanged, Qt::QueuedConnection);
-
-    emit updateProcess(10, message, ipString_);
-    std::cerr << logger() << "Copy transactions..." <<std::endl;
-
-    const auto paramsScp = QStringList() << login_ <<ipString_ << destFolder_;
-    std::cerr << logger() << "script " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-    exitCode = process_->execute(scriptFileName_, paramsScp);
-    if(exitCode != 0)
-    {
-        QString message(tr("Fail copy transactions from %1. Error '%2'.").arg(idString_).arg(exitCode));
-        std::cerr << logger() << message.toStdString() << std::endl;
-        emit error(ipString_, message);
-        return;
-    }
-    message = tr("Finished");
-    emit updateProcess(100, message, ipString_);
-}
-
-void Transactions::stateChanged(QProcess::ProcessState /*newState*/)
-{
-    std::cerr<<"new state "<< std::endl;
-}
-
-void Transactions::readyReadStandardError()
-{
-    std::cerr << "111111111111: "<< QString::fromLatin1(process_->readAllStandardError()).toStdString();
-}
-
-void Transactions::readyReadStandardOutput()
-{
-    std::cout << "111111111111: " << QString::fromLatin1(process_->readAllStandardOutput()).toStdString();
-}
-
-
-void Transactions::stop()
-{
-
-}
 
 Upload::Upload(const QString &login,
         const QString &ipString,
@@ -97,28 +22,6 @@ Upload::Upload(const QString &login,
 Upload::~Upload()
 {
 
-}
-
-std::string Upload::findIpk(const boost::filesystem::path& path)
-{
-    std::cerr << logger()<<"Upload::findIpk: " << path.string() <<std::endl;
-
-    if(boost::filesystem::exists(path) && boost::filesystem::is_directory(path))
-    {
-        //std::cerr << logger() << __FILE__ << ":" << __LINE__ <<std::endl;
-        for (boost::filesystem::directory_iterator itr(path); itr!=boost::filesystem::directory_iterator(); ++itr)
-        {
-            //std::cerr << logger() << __FILE__ << ":" << __LINE__ <<std::endl;
-            if (boost::filesystem::is_regular_file(itr->status()) && itr->path().extension().string().compare(".zip")==0)
-            {
-                //std::cerr << logger() << __FILE__ << ":" << __LINE__ <<std::endl;
-                std::cerr << logger() << "founded ipk: " << itr->path().filename().string() << std::endl;
-                return itr->path().filename().string();
-            }
-        }
-    }
-    //std::cerr << logger() << __FILE__ << ":" << __LINE__ <<std::endl;
-    return std::string();
 }
 
 void Upload::mkDirOnValidator(const QString& path)
@@ -205,22 +108,13 @@ void Upload::process()
 
             boost::filesystem::path pathIpk(pathSourceSoftware_.toStdString());
             std::string filenameIpk;
-            //filenameIpk = findIpk(pathIpk);
             filenameIpk = pathIpk.string();
 
             if(!filenameIpk.empty())
             {
-                /*auto fullPathIpk = QString::fromStdString((pathIpk/filenameIpk).string());
-                message = tr("update software");
-                emit updateProcess(0, message, ipString_);
-                copy(fullPathIpk, pathUpdateSoftware_);
-                emit updateProcess(25, message, ipString_);
-                installIpk(QString::fromStdString((boost::filesystem::path(pathUpdateSoftware_.toStdString())/filenameIpk).string()));
-                emit updateProcess(50, message, ipString_);*/
                 auto fullPathIpk = QString::fromStdString(filenameIpk);
                 message = tr("update software");
                 emit updateProcess(0, message, ipString_);
-                //copy(fullPathIpk, pathUpdateSoftware_);
                 copy(fullPathIpk, pathUpdateSoftware_);
                 emit updateProcess(25, message, ipString_);
                 installIpk(QString::fromStdString((boost::filesystem::path(pathUpdateSoftware_.toStdString())/filenameIpk).string()));
@@ -270,75 +164,74 @@ void Upload::stop()
 
 }
 
-DownloadUpdates::DownloadUpdates(const QString &scriptFile, const QString& sourcePathSW, const QString& destinationPath)
-    :scriptFile_(scriptFile)
-    , sourcePathSW_(sourcePathSW)
-    , destinationPath_(destinationPath)
+ScriptExecute::ScriptExecute(const QString &fileNameScript,
+        const QStringList &paramsScript,
+        const QString &ipString,
+        const QString& startMessage,
+        const QString& finishMessage,
+        const QString& errorMessage)
+    : fileNameScript_(fileNameScript)
+    , paramsScript_(paramsScript)
+    , ipString_(ipString)
+    , startMessage_(startMessage)
+    , finishMessage_(finishMessage)
+    , errorMessage_(errorMessage)
 {
 
 }
 
-DownloadUpdates::~DownloadUpdates()
+ScriptExecute::~ScriptExecute()
 {
 
 }
 
-void DownloadUpdates::process()
+void ScriptExecute::process()
 {
-#if defined(unix)
-    QString message = tr("Start download updates...");
-    std::cout << logger() << message.toStdString() << std::endl;
-    int percent = 0;
-    emit updateProcess(percent, message);
-    auto f = [this, &percent]()
+    auto f = [this]()
     {
         emit finished();
     };
     AutoCall0 autoCallFinished(std::bind(f));
 
-    try
-    {
-        process_ = new QProcess();
-        connect(process_, &QProcess::readyReadStandardError, this, &DownloadUpdates::readyReadStandardError, Qt::QueuedConnection);
-        connect(process_, &QProcess::readyReadStandardOutput, this, &DownloadUpdates::readyReadStandardOutput, Qt::QueuedConnection);
-        process_->setProgram(QString::fromLatin1("/bin/bash"));
-        process_->start();
+    try{
+        emit updateProcess(10, startMessage_, ipString_);
+        std::cerr << logger() << startMessage_.toStdString() <<std::endl;
+        process_ = new QProcess(this);
+        process_->setProcessChannelMode(QProcess::ForwardedChannels);
+        connect(process_, &QProcess::readyReadStandardError, this, &ScriptExecute::readyReadStandardError, Qt::QueuedConnection);
+        connect(process_, &QProcess::readyReadStandardOutput, this, &ScriptExecute::readyReadStandardOutput, Qt::QueuedConnection);
+        connect(process_, &QProcess::stateChanged, this, &ScriptExecute::stateChanged, Qt::QueuedConnection);
 
-        const auto params = QStringList() << sourcePathSW_ << destinationPath_;
-        std::cerr << logger() << scriptFile_.toStdString() << " " << params.join(QStringLiteral(" ")).toStdString() << std::endl;
-        auto exitCode = process_->execute(scriptFile_, params);
+        std::cerr << logger() << fileNameScript_.toStdString() << " " <<  paramsScript_.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+        const auto exitCode = process_->execute(fileNameScript_, paramsScript_);
         if(exitCode != 0)
         {
-            std::string message(tr("Fail download updates. Error code '%1'.").arg(exitCode).toStdString());
-            throw std::logic_error(message);
+            QString message(tr("%1: %3. Error code '%2'.").arg(ipString_).arg(exitCode).arg(errorMessage_));
+            std::cerr << logger() << message.toStdString() << std::endl;
+            emit error(ipString_, message);
+            return;
         }
-        percent = 100;
-        message = tr("Finished download updates.");
-        emit updateProcess(percent, message);
+        emit updateProcess(100, finishMessage_, ipString_);
     }
     catch(const std::exception& ex)
     {
-        std::cerr << logger() << ex.what() <<std::endl;
-        emit error(QString::fromStdString(ex.what()));
+        QString message(tr("%3: %1. Error message '%2'").arg(errorMessage_).arg(QString::fromStdString(ex.what())).arg(ipString_));
+        std::cerr << logger() << message.toStdString() <<std::endl;
+        emit error(ipString_, message);
     }
-
-#else
-#error Not implemented download updates
-#endif
 }
 
-void DownloadUpdates::stop()
+void ScriptExecute::readyReadStandardError()
 {
-
+    std::cerr<<"new state "<< std::endl;
 }
 
-void DownloadUpdates::readyReadStandardError()
+void ScriptExecute::readyReadStandardOutput()
 {
     std::cerr << "111111111111: "<< QString::fromLatin1(process_->readAllStandardError()).toStdString();
 }
 
-void DownloadUpdates::readyReadStandardOutput()
+void ScriptExecute::stateChanged(QProcess::ProcessState)
 {
     std::cout << "111111111111: " << QString::fromLatin1(process_->readAllStandardOutput()).toStdString();
 }
-

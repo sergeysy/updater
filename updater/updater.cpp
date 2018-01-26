@@ -173,23 +173,23 @@ void updater::commandUploadTransactions()
         }
         const auto pathDestination = folderAplication_/folderTransactionStore_/idString.toStdString();
         const QString folderDestination(QString::fromStdString(pathDestination.string()));
-        Transactions *transactionProcess = new Transactions(QString::fromStdString((folderAplication_/"scripts"/"move-transactions.sh").string())
-                                                            ,login
-                                                            , ipString
-                                                            , idString
-                                                            , folderTransactionsOnValidator
-                                                            , folderDestination);
+        ScriptExecute *transactionProcess = new ScriptExecute(QString::fromStdString((folderAplication_/"scripts"/"move-transactions.sh").string())
+                                                      , QStringList()<< login << ipString << folderDestination
+                                                      , ipString
+                                                      , tr("Copy transactions...")
+                                                      , tr("Finished")
+                                                      , tr("Fail copy transactions"));
 
         QThread* thread = new QThread;
         transactionProcess->moveToThread(thread);
 
-        connect(thread, &QThread::started, transactionProcess, &Transactions::process, Qt::QueuedConnection);
-        connect(transactionProcess, &Transactions::error, this, &updater::errorProcess, Qt::QueuedConnection);
-        connect(transactionProcess, &Transactions::updateProcess, this, &updater::updateProcessTransactions, Qt::QueuedConnection);
-        connect(transactionProcess, &Transactions::finished, thread, &QThread::quit, Qt::QueuedConnection);
-        connect(transactionProcess, &Transactions::finished, this, &updater::finishedTransactions, Qt::QueuedConnection);
-        connect(this, &updater::stopAll, transactionProcess, &Transactions::stop, Qt::QueuedConnection);
-        connect(transactionProcess, &Transactions::finished, transactionProcess, &Transactions::deleteLater, Qt::QueuedConnection);
+        connect(thread, &QThread::started, transactionProcess, &ScriptExecute::process, Qt::QueuedConnection);
+        connect(transactionProcess, &ScriptExecute::error, this, &updater::errorProcess, Qt::QueuedConnection);
+        connect(transactionProcess, &ScriptExecute::updateProcess, this, &updater::updateProcessTransactions, Qt::QueuedConnection);
+        connect(transactionProcess, &ScriptExecute::finished, thread, &QThread::quit, Qt::QueuedConnection);
+        connect(transactionProcess, &ScriptExecute::finished, this, &updater::finishedTransactions, Qt::QueuedConnection);
+        //connect(this, &updater::stopAll, transactionProcess, &Script::stop, Qt::QueuedConnection);
+        connect(transactionProcess, &ScriptExecute::finished, transactionProcess, &ScriptExecute::deleteLater, Qt::QueuedConnection);
         connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
 
         thread->start();
@@ -563,18 +563,24 @@ void updater::commandDownloadUpdates()
 
     const QString sourcePathSW(QStringLiteral("./images/Application"));
     const QString destinationPath = QString::fromStdString((folderAplication_/localSubFolderUpdateSoftware_).string());
-    DownloadUpdates *downloadUpdateProcess = new DownloadUpdates(QString::fromStdString(scriptFilename.string()), sourcePathSW, destinationPath);
+    ScriptExecute *downloadUpdateProcess = new ScriptExecute(
+                QString::fromStdString(scriptFilename.string()),
+                QStringList() << sourcePathSW << destinationPath,
+                tr(""),
+                tr("Start download updates..."),
+                tr("Finished download updates."),
+                tr("Fail download updates."));
 
     QThread* thread = new QThread;
     downloadUpdateProcess->moveToThread(thread);
 
-    connect(thread, &QThread::started, downloadUpdateProcess, &DownloadUpdates::process, Qt::QueuedConnection);
-    connect(downloadUpdateProcess, &DownloadUpdates::updateProcess, this, &updater::updateProcessDownloadUpdates, Qt::QueuedConnection);
-    connect(downloadUpdateProcess, &DownloadUpdates::error, this, &updater::errorProcessDownloadUpdates, Qt::QueuedConnection);
-    connect(downloadUpdateProcess, &DownloadUpdates::finished, thread, &QThread::quit, Qt::QueuedConnection);
-    connect(downloadUpdateProcess, &DownloadUpdates::finished, this, &updater::finishedDownloadUpdates, Qt::QueuedConnection);
-    connect(this, &updater::stopAll, downloadUpdateProcess, &DownloadUpdates::stop, Qt::QueuedConnection);
-    connect(downloadUpdateProcess, &DownloadUpdates::finished, downloadUpdateProcess, &DownloadUpdates::deleteLater, Qt::QueuedConnection);
+    connect(thread, &QThread::started, downloadUpdateProcess, &ScriptExecute::process, Qt::QueuedConnection);
+    connect(downloadUpdateProcess, &ScriptExecute::updateProcess, this, &updater::updateProcessDownloadUpdates, Qt::QueuedConnection);
+    connect(downloadUpdateProcess, &ScriptExecute::error, this, &updater::errorProcessDownloadUpdates, Qt::QueuedConnection);
+    connect(downloadUpdateProcess, &ScriptExecute::finished, thread, &QThread::quit, Qt::QueuedConnection);
+    connect(downloadUpdateProcess, &ScriptExecute::finished, this, &updater::finishedDownloadUpdates, Qt::QueuedConnection);
+    //connect(this, &updater::stopAll, downloadUpdateProcess, &ScriptExecute::stop, Qt::QueuedConnection);
+    connect(downloadUpdateProcess, &ScriptExecute::finished, downloadUpdateProcess, &ScriptExecute::deleteLater, Qt::QueuedConnection);
     connect(thread, &QThread::finished, thread, &QThread::deleteLater, Qt::QueuedConnection);
 
     thread->start();

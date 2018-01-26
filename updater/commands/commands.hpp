@@ -7,29 +7,35 @@
 #include <QObject>
 #include <QCoreApplication>
 
-class Transactions : public QObject
+class ScriptExecute final : public QObject
 {
     Q_OBJECT
 public:
-    Transactions(const QString& scriptFileName, const QString& login, const QString& ipString, const QString& idString, const QString &sourceFolder, const QString &destFolder);
-    virtual ~Transactions();
+    ScriptExecute(const QString& fileNameScript,
+            const QStringList& paramsScript,
+            const QString& ipString,
+            const QString &startMessage,
+            const QString &finishMessage,
+            const QString &errorMessage);
+    virtual ~ScriptExecute();
 
 public slots:
     void process();
-    void stop();
 
 signals:
     void finished();
-    void error(const QString idString, const QString);
+    void error(const QString, const QString);
     void updateProcess(int percent, const QString message, const QString ipString);
 
 private:
-    QString scriptFileName_;
-    QString login_;
+    QString fileNameScript_;
+    QStringList paramsScript_;
     QString ipString_;
-    QString idString_;
-    QString sourceFolder_;
-    QString destFolder_;
+    const QString startMessage_;
+    const QString finishMessage_;
+    const QString errorMessage_;
+
+
 
     QProcess *process_;
 private slots:
@@ -37,6 +43,7 @@ private slots:
     void readyReadStandardOutput();
     void stateChanged(QProcess::ProcessState /*newState*/);
 };
+
 
 class Upload : public QObject
 {
@@ -66,7 +73,6 @@ private:
     QProcess* process_;
 
 
-    std::string findIpk(const boost::filesystem::path& path);
     void mkDirOnValidator(const QString& path);
 
     void copy(const QString &sourceFile, const QString &destFolder);
@@ -76,29 +82,3 @@ private:
 
 };
 
-class DownloadUpdates : public QObject
-{
-    Q_OBJECT
-public:
-    DownloadUpdates(const QString& scriptFile, const QString& sourcePathSW, const QString& destinationPath);
-    ~DownloadUpdates();
-
-public slots:
-    void process();
-    void stop();
-
-signals:
-    void finished();
-    void error(const QString);
-    void updateProcess(int percent, const QString message);
-
-private:
-    QString scriptFile_;
-    QString sourcePathSW_;
-    QString destinationPath_;
-    QProcess *process_;
-
-private slots:
-    void readyReadStandardError();
-    void readyReadStandardOutput();
-};
