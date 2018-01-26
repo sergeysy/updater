@@ -484,19 +484,12 @@ void updater::commandChangeValidatorId()
         process_->setProgram(QString::fromLatin1("/bin/bash"));
         process_->start();
 
-        boost::filesystem::path pathSettings = boost::filesystem::path(DetectorValidator::pathSettings.toStdString()).parent_path();
         const auto login = settings_->value(nameLogin, QString::fromLatin1("root")).toString();
-        const auto changeIdCommandParams =
-                QStringList()
-                << QString::fromLatin1("-oStrictHostKeyChecking=no")
-                << QString::fromLatin1("%1@%2").arg(login).arg(ipString)
-                   <<QString::fromLatin1("\"mkdir -p %1 && echo %2 > %1/client_id\"")
-                     .arg(DetectorValidator::pathSettings)
-                     .arg(idString)
-                     //.arg(DetectorValidator::pathSettings)
-                ;
-        std::cerr << logger() << "ssh " << changeIdCommandParams.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-        int exitCode = process_->execute(QString::fromLatin1("ssh ")+changeIdCommandParams.join(QString::fromLatin1(" ")));
+        const auto changeIdCommandParams = QStringList()<<login<<ipString<<idString;
+
+        const auto scriptFilename = folderAplication_/"scripts"/"change-id.sh";
+        std::cerr << logger() << scriptFilename.string() << " " << changeIdCommandParams.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+        int exitCode = process_->execute(QString::fromStdString(scriptFilename.string()), changeIdCommandParams);
         if (exitCode != 0)
         {
             std::cerr << logger() << "ERROR execute: ssh "<< changeIdCommandParams.join(QString::fromLatin1(" ")).toStdString()<< " status error code: "<< exitCode << std::endl;
@@ -659,9 +652,6 @@ void updater::updateInfoValidator(const QString& idValidator)
 
 void updater::loadTranslate()
 {
-    //QTranslator* myTranslator = new QTranslator(QCoreApplication::instance());
-    //myTranslator.load("validator_" + QLocale::system().name());
-
     myTranslator = std::make_shared<QTranslator>();
     std::cerr << logger() << "Locale: " << QLocale::system().name().toStdString() << " .Load traslator file: " <<settings_->value(nameTranslatorFile).toString().toStdString()
               << " from " << folderAplication_.string() <<std::endl;
