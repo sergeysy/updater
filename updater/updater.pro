@@ -44,7 +44,6 @@ UI_DIR = "$$DESTDIR/.u"
 #UI_DIR += ./GeneratedFiles
 #RCC_DIR += ./GeneratedFiles
 
-win32:RC_FILE = updater.rc
 HEADERS += ./updater.h \
 	./pinger/ipv4_header.hpp \
 	./pinger/icmp_header.hpp \
