@@ -8,7 +8,6 @@ CONFIG += c++17
 INCLUDEPATH += $$ROOT_DIR/3rd_party/ZipLib/Source/ZipLib
 DEPENDPATH += $$ROOT_DIR/3rd_party/ZipLib/Source
 
-
 INCLUDEPATH += \
 	./pinger \
         "$$LIB_UTILS_DIR/include" \
@@ -16,6 +15,7 @@ INCLUDEPATH += \
         "$$LIB_FACADE_STORAGE_TRANSACTIONS_DIR" \
 
 win32 {
+    INCLUDEPATH += $(IncludePath)
     INCLUDEPATH += $(BOOST_ROOT)
 }
 message($$INCLUDEPATH)
