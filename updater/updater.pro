@@ -99,8 +99,15 @@ LIBS += -lcurl
 DEFINES += QT_NO_CAST_FROM_ASCII
 
 QMAKE_CXXFLAGS += -finput-charset="UTF-8"
-QMAKE_CXXFLAGS += -Werror
 QMAKE_CXXFLAGS += -Wall
+
+unix {
+QMAKE_CXXFLAGS += -Werror
+}
+win32 {
+QMAKE_CXXFLAGS += WX
+}
+
 
 unix {
 QMAKE_CXXFLAGS += -static-libgcc -static-libstdc++
