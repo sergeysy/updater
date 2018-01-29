@@ -55,8 +55,11 @@ public:
     Upload(const QString &login,
            const QString &ipString,
            const QString &idString,
-           const QString &pathSourceSoftware,
-           const QString &pathSourceWhitelist);
+           const QString &scriptInstallApplication,
+           const QString &sourceFolderApplication,
+           const QString &scriptInstallWhitelist,
+           const QString &sourceFolderWhitelist
+           );
     virtual ~Upload();
 
 public slots:
@@ -75,21 +78,11 @@ private:
     QString login_;
     QString ipString_;
     QString idString_;
-    QString pathSourceSoftware_;
-    QString pathSourceWhitelist_;
+    QString scriptInstallApplication_;
+    QString sourceFolderApplication_;
+    QString scriptInstallWhitelist_;
+    QString sourceFolderWhitelist_;
 
-    QString pathUpdateSoftware_ = QString::fromLatin1("/home/updater/updates");
-    QString pathDestinationWhitelist_ = QString::fromLatin1("/mnt/dom");
     QProcess* process_;
-
-
-    void mkDirOnValidator(const QString& path);
-
-    void copy(const QString &sourceFile,
-              const QString &destFolder);
-    void installIpk(const QString &pathIpk);
-
-    void copyWhitelist();
-
 };
 

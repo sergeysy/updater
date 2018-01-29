@@ -358,7 +358,15 @@ void updater::createUploadSoftwareProcess(
         const QString& pathUploadSoftware,
         const QString& pathUploadWhitelist)
 {
-    Upload *uploadProcess = new Upload(login, ipString, idString, pathUploadSoftware, pathUploadWhitelist);
+    const auto scriptInstallApplication = folderAplication_/"scripts"/"install-application.sh";
+    const auto scriptInstallWhitelist = folderAplication_/"scripts"/"install-whitelist.sh";
+    Upload *uploadProcess = new Upload(login,
+                                       ipString,
+                                       idString,
+                                       QString::fromStdString(scriptInstallApplication.string()),
+                                       pathUploadSoftware,
+                                       QString::fromStdString(scriptInstallWhitelist.string()),
+                                       pathUploadWhitelist);
 
     QThread* thread = new QThread;
     uploadProcess->moveToThread(thread);

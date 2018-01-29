@@ -9,14 +9,18 @@
 Upload::Upload(const QString &login,
         const QString &ipString,
         const QString& idString,
-        const QString& pathSourceSoftware,
-        const QString& pathSourceWhitelist)
+        const QString &scriptInstallApplication,
+        const QString &sourceFolderApplication,
+        const QString &scriptInstallWhitelist,
+        const QString &sourceFolderWhitelist)
     : QObject(nullptr)
     , login_(login)
     , ipString_(ipString)
     , idString_(idString)
-    , pathSourceSoftware_(pathSourceSoftware)
-    , pathSourceWhitelist_(pathSourceWhitelist)
+    , scriptInstallApplication_(scriptInstallApplication)
+    , sourceFolderApplication_(sourceFolderApplication)
+    , scriptInstallWhitelist_(scriptInstallWhitelist)
+    , sourceFolderWhitelist_(sourceFolderWhitelist)
 {
 
 }
@@ -26,74 +30,8 @@ Upload::~Upload()
 
 }
 
-void Upload::mkDirOnValidator(const QString& path)
-{
-    const auto mkDirCommand = QStringList()<<QString::fromLatin1("-oStrictHostKeyChecking=no") <<QString::fromLatin1("%1@%2").arg(login_).arg(ipString_) <<QString::fromLatin1("mkdir -p %1").arg(path);
-    std::cerr << logger() << mkDirCommand.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-    auto exitCode = process_->execute(QString::fromLatin1("ssh"),mkDirCommand);
-    if(exitCode != 0)
-    {
-        std::string message(tr("Fail create directory on %1. Error '%2'.").arg(idString_).arg(exitCode).toStdString());
-        //std::cerr << logger() << message << std::endl;
-        throw std::logic_error(message);
-    }
-}
-
-void Upload::copy(const QString& sourceFile,
-                  const QString& destFolder)
-{
-    std::cerr<<logger()<<"Start copy..."<<std::endl;
-    const auto pathFile(sourceFile.toStdString());
-    if(!boost::filesystem::exists(pathFile) || !boost::filesystem::is_regular_file(pathFile))
-    {
-        throw std::logic_error(QString::fromLatin1("File \"%1\" not found.").arg(sourceFile).toStdString());
-    }
-    const auto paramsScp = QStringList()<<QString::fromLatin1("-oStrictHostKeyChecking=no")
-                                       << QString::fromLatin1("-r") << QString::fromLatin1("%1").arg(sourceFile)
-                                         <<QString::fromLatin1("%1@%2:%3").arg(login_).arg(ipString_).arg(destFolder);
-    std::cerr << logger() << "scp " <<  paramsScp.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-    const auto exitCode = process_->execute(QString::fromLatin1("scp"), paramsScp);
-    if(exitCode != 0)
-    {
-        std::string message(tr("Fail copy \"%3\" to \"%4\" on %1. Error '%2'.").arg(idString_).arg(exitCode).arg(sourceFile).arg(destFolder).toStdString());
-        std::cerr << logger() << message << std::endl;
-        throw std::logic_error(message);
-    }
-}
-
-void Upload::installIpk(const QString& pathIpk)
-{
-    std::cerr<<logger()<<"Start install..."<<std::endl;
-    const auto installIpkCommandParams = QStringList()
-            <<QString::fromLatin1("-oStrictHostKeyChecking=no")
-            << QString::fromLatin1("%1@%2").arg(login_).arg(ipString_)
-               << QString::fromLatin1("unzip -o %1/%2 -d %1").arg(pathUpdateSoftware_).arg(QString::fromStdString(boost::filesystem::path(pathIpk.toStdString()).filename().string()));
-    std::cerr << logger() << "ssh " << installIpkCommandParams.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-
-    auto exitCode = process_->execute(QString::fromLatin1("ssh"), installIpkCommandParams);
-    if(exitCode != 0)
-    {
-        std::string message(tr("Fail create directory on %1. Error '%2'.").arg(idString_).arg(exitCode).toStdString());
-        throw std::logic_error(message);
-    }
-
-    const auto installIpkCommandParams2 = QStringList()
-            <<QString::fromLatin1("-oStrictHostKeyChecking=no")
-            << QString::fromLatin1("%1@%2").arg(login_).arg(ipString_)
-               << QString::fromLatin1("bash %1/install.sh").arg(pathUpdateSoftware_);
-    std::cerr << logger() << "ssh " << installIpkCommandParams2.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-
-    exitCode = process_->execute(QString::fromLatin1("ssh"), installIpkCommandParams2);
-    if(exitCode != 0)
-    {
-        std::string message(tr("Fail execute install.sh on %1. Error '%2'.").arg(idString_).arg(exitCode).toStdString());
-        throw std::logic_error(message);
-    }
-}
-
 void Upload::process()
 {
-#if defined(unix)
     auto f = [this](){emit finished();};
     AutoCall0 autoCallFinished(std::bind(f));
 
@@ -105,27 +43,16 @@ void Upload::process()
         process_->setProgram(QString::fromLatin1("/bin/bash"));
         process_->start();
 
-        if(!pathSourceSoftware_.isEmpty())
+        if(!sourceFolderApplication_.isEmpty())
         {
-            mkDirOnValidator(pathUpdateSoftware_);
-
-            boost::filesystem::path pathIpk(pathSourceSoftware_.toStdString());
-            std::string filenameIpk;
-            filenameIpk = pathIpk.string();
-
-            if(!filenameIpk.empty())
+            const auto params = QStringList()<< login_<< ipString_ << sourceFolderApplication_;
+            std::cerr << logger() << scriptInstallApplication_.toStdString() << " " <<  params.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+            const auto exitCode = process_->execute(scriptInstallApplication_, params);
+            if(exitCode != 0)
             {
-                auto fullPathIpk = QString::fromStdString(filenameIpk);
-                message = tr("update software");
-                emit updateProcess(0, message, ipString_);
-                copy(fullPathIpk, pathUpdateSoftware_);
-                emit updateProcess(25, message, ipString_);
-                installIpk(QString::fromStdString((boost::filesystem::path(pathUpdateSoftware_.toStdString())/filenameIpk).string()));
-                emit updateProcess(50, message, ipString_);
-            }
-            else
-            {
-                std::cerr<<logger()<<"file ipk empty"<<std::endl;
+                std::string message(tr("%1: Fail install application. Error '%2'.").arg(idString_).arg(exitCode).toStdString());
+                std::cerr << logger() << message << std::endl;
+                throw std::logic_error(message);
             }
         }
         else
@@ -135,11 +62,17 @@ void Upload::process()
 
         message = tr("Update \"whitelist\"");
         emit updateProcess(50, message, ipString_);
-        if(!pathSourceWhitelist_.isEmpty())
+        if(!sourceFolderWhitelist_.isEmpty())
         {
-            mkDirOnValidator(pathDestinationWhitelist_);
-            copy(pathSourceWhitelist_, pathDestinationWhitelist_);
-            //installWhitelist();
+            const auto params = QStringList()<< login_ << ipString_ << sourceFolderWhitelist_;
+            std::cerr << logger() << scriptInstallWhitelist_.toStdString() << " " <<  params.join(QString::fromLatin1(" ")).toStdString() << std::endl;
+            const auto exitCode = process_->execute(scriptInstallWhitelist_, params);
+            if(exitCode != 0)
+            {
+                std::string message(tr("%1: Fail install whitelist. Error '%2'.").arg(idString_).arg(exitCode).toStdString());
+                std::cerr << logger() << message << std::endl;
+                throw std::logic_error(message);
+            }
         }
         else
         {
@@ -155,11 +88,6 @@ void Upload::process()
         emit error(ipString_, QString::fromStdString(ex.what()));
         return;
     }
-
-
-#else
-#error Not implemented install ipk and update whitelist
-#endif
 }
 
 void Upload::stop()
