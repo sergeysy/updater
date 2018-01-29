@@ -123,7 +123,6 @@ QString DetectorValidator::getIdValidator(const int result, const boost::filesys
 QString DetectorValidator::getSettingValue(const boost::filesystem::path& folder,
                                            const std::string& name)
 {
-#if defined(unix)
     auto  destinationFile = folder/ name;
     QString value;
     if (boost::filesystem::is_regular_file(destinationFile) && boost::filesystem::exists(destinationFile))
@@ -138,15 +137,11 @@ QString DetectorValidator::getSettingValue(const boost::filesystem::path& folder
 
     std::cerr<<logger()<< name <<"="<<value.toStdString()<<std::endl;
     return value;
-#else //end LINUX
-    #error Not implemented on this platform
-#endif
 }
 
 QString DetectorValidator::getTimezone(const int result,
                                        const boost::filesystem::path& folder)
 {
-#if defined(unix)
     std::cerr<<logger() << __FUNCTION__<<std::endl;
     QString timezone;
     if(0 != result)
@@ -170,9 +165,6 @@ QString DetectorValidator::getTimezone(const int result,
 
     std::cerr<<logger()<<"timezone="<<timezone.toStdString()<<std::endl;
     return timezone;
-#else //end LINUX
-    #error Not implemented on this platform
-#endif
 }
 
 QString DetectorValidator::getStatusPing(const QString& ipString)
@@ -239,24 +231,6 @@ int DetectorValidator::readSettingsValidator(const QString& login,
 
     return exitCode;
 #endif //end LINUX
-
-#if defined(_WIN32) || defined(WIN32)
-    //windows
-    //pscp -scp root@10.25.153.15:/validator/bin/validator d:/temp
-    auto process = new QProcess();
-    /*const auto params = QStringList() << QString::fromLatin1("-scp %1@%2:%3").arg(login).arg(ip).arg(fileSource) << QString::fromLatin1("'%1'").arg(fileDestination);
-    int exitCode = process->execute(QString::fromLatin1("pscp"), params);*/
-    auto command = QString::fromLatin1("pscp -scp %1@%2:%3 %4").arg(login).arg(ip).arg(fileSource).arg(fileDestination);
-    int exitCode = process->execute(command);
-    if (exitCode >= 0)
-    {
-        const auto result = process->readAllStandardOutput();
-        std::cerr << logger() << std::endl;
-    }
-
-    return exitCode;
-#endif //WINDOWS
-
 }
 
 int DetectorValidator::prepareSystemInfo(const QString& login,
