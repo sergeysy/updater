@@ -99,10 +99,11 @@ LIBS += -lcurl
 DEFINES += QT_NO_CAST_FROM_ASCII
 
 QMAKE_CXXFLAGS += -finput-charset="UTF-8"
-unix {
-QMAKE_CXXFLAGS += -static-libgcc -static-libstdc++
 QMAKE_CXXFLAGS += -Werror
 QMAKE_CXXFLAGS += -Wall
+
+unix {
+QMAKE_CXXFLAGS += -static-libgcc -static-libstdc++
 QMAKE_CXXFLAGS += -g
 # QMAKE_CXXFLAGS += -Wconversion
 }
@@ -115,8 +116,7 @@ win32 {
 QMAKE_POST_LINK += "copy \"$$_PRO_FILE_PWD_\settingsApplication\settings.ini\" \"$$DESTDIR/$$MYFILE.ini\""
 }
 
-unix {
 QMAKE_POST_LINK += "cp $$_PRO_FILE_PWD_/settingsApplication/settings.ini $$DESTDIR/$$TARGET.ini;"
 QMAKE_POST_LINK += "cp -r $$_PRO_FILE_PWD_/scripts $$DESTDIR/;"
 QMAKE_POST_LINK += "cp -r $$_PRO_FILE_PWD_/*.qm $$DESTDIR/;"
-}
+
