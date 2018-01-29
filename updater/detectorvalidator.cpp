@@ -194,43 +194,13 @@ int DetectorValidator::readSettingsValidator(const QString& login,
                                              const QString& folderSource,
                                              const QString&  /*folderDestination*/)
 {
-#if defined(unix)
-    //linux
-    //ssh $LOGIN@$DEST_MACHINE '/etc/init.d/validator.sh stop'
-//echo password | ssh id@server
-    //ssh-keygen -f "/home/savin/.ssh/known_hosts" -R 10.25.153.15
-    //ssh-keyscan -t ecdsa 10.25.153.15 >> ~/.ssh/known_hosts
-
-    auto updateKey = QString::fromLatin1("\"ssh-keyscan -t ecdsa %1 >> ~/.ssh/known_hosts\"").arg(ip);
-    //auto updateKey = QString::fromLatin1("ssh-keyscan -t ecdsa %1").arg(ip);
-    process_->setProgram(QString::fromLatin1("/bin/bash"));
-    process_->start();
-    std::cout << logger() << "Update host: " << updateKey.toStdString()<<std::endl;
-    int exitCode = process_->write(updateKey.toStdString().c_str());
-    if (exitCode <= 0)
-    {
-        std::cerr << logger() << "ERROR execute: "<< updateKey.toStdString() << std::endl;
-        return exitCode;
-    }
-
-    //"ssh -q root@10.25.153.16 exit"
-    const auto checkConnectionParams = QStringList()<<QString::fromLatin1("-oStrictHostKeyChecking=no")  << QString::fromLatin1("-q") << QString::fromLatin1("%1@%2").arg(login).arg(ip)<< QString::fromLatin1("echo");
-    std::cerr << logger() << "ssh " <<  checkConnectionParams.join(QString::fromLatin1(" ")).toStdString() << std::endl;
-    exitCode = process_->execute(QString::fromLatin1("ssh"), checkConnectionParams);
-    if(exitCode != 0)
-    {
-        std::cerr << logger() << "Fail connection to " << ip.toStdString() << " status error code: " << exitCode << std::endl;
-        return -3;
-    }
-
-    exitCode = prepareSystemInfo(login, ip, folderSource);
+    const auto exitCode = prepareSystemInfo(login, ip, folderSource);
     if(exitCode != 0)
     {
         std::cerr << logger() << "Fail get system info validator" << std::endl;
     }
 
     return exitCode;
-#endif //end LINUX
 }
 
 int DetectorValidator::prepareSystemInfo(const QString& login,
