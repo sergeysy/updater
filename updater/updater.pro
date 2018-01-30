@@ -129,11 +129,17 @@ MYFILE = $$TARGET
 message($$TARGET);
 message($$MYFILE);
 message($$DESTDIR);
+
 win32 {
-QMAKE_POST_LINK += "copy \"$$_PRO_FILE_PWD_\settingsApplication\settings.ini\" \"$$DESTDIR/$$MYFILE.ini\""
+CP = copy
 }
 
-QMAKE_POST_LINK += "cp $$_PRO_FILE_PWD_/settingsApplication/settings.ini $$DESTDIR/$$TARGET.ini;"
-QMAKE_POST_LINK += "cp -r $$_PRO_FILE_PWD_/scripts $$DESTDIR/;"
-QMAKE_POST_LINK += "cp -r $$_PRO_FILE_PWD_/*.qm $$DESTDIR/;"
+unix {
+CP = cp
+}
 
+unix {
+QMAKE_POST_LINK += "$$CP "$$_PRO_FILE_PWD_/settingsApplication/settings.ini" "$$DESTDIR/$$TARGET.ini";"
+QMAKE_POST_LINK += "$$CP -r "$$_PRO_FILE_PWD_/scripts" "$$DESTDIR/";"
+QMAKE_POST_LINK += "$$CP -r "$$_PRO_FILE_PWD_/*.qm" "$$DESTDIR/";"
+}
