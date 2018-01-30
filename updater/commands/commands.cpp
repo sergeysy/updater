@@ -57,7 +57,7 @@ void Upload::process()
         }
         else
         {
-            std::cerr << logger() << "not need install ipk" << std::endl;
+            std::cerr << logger() << "ipk not need install" << std::endl;
         }
 
         message = tr("Update \"whitelist\"");
