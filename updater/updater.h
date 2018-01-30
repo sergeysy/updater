@@ -111,5 +111,5 @@ private slots:
     void updateProcessDownloadUpdates(int percent,
                                       const QString message);
     void finishedDownloadUpdates();
-    void errorProcessDownloadUpdates( const QString message);
+    void errorProcessDownloadUpdates(const  QString ip, const QString message);
 };

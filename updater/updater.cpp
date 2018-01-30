@@ -597,7 +597,7 @@ void updater::commandDownloadUpdates()
     ScriptExecute *downloadUpdateProcess = new ScriptExecute(
                 QString::fromStdString(scriptFilename.string()),
                 QStringList() << sourcePathSW << destinationPath,
-                tr(""),
+                tr("192.168.50.105"),
                 tr("Start download updates..."),
                 tr("Finished download updates."),
                 tr("Fail download updates."));
@@ -678,7 +678,7 @@ void updater::fillListUpdateSoftware()
     ui.comboBoxUpdateSoftware->setCurrentIndex(-1);
 }
 
-void updater::errorProcessDownloadUpdates( const QString message)
+void updater::errorProcessDownloadUpdates(const  QString ip, const QString message)
 {
     finishedDownloadUpdates();
     ui.labelStatusDetect->setText(message);
