@@ -20,3 +20,5 @@ moc_*.*
 *.o
 ui_*.*
 screen/screen
+
+/updater.sln
