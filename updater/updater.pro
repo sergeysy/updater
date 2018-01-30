@@ -1,6 +1,8 @@
 TEMPLATE = app
 VERSION = 1.0.0.0
 
+QT -= network
+
 TARGET = updater
 CONFIG += c++17
 # QMAKE_CXXFLAGS += -std=c++14
@@ -77,6 +79,15 @@ LIBS += -l"$$LIBFACADE_STORAGE_TRANSACTIONS"
 message($$LIBS)
 message($$LIBUTILS)
 win32 {
+LIBS += -L"$$ROOT_DIR/3rd_party/curl/builds/libcurl-vc14-x86-release-static-ipv6-sspi-winssl/lib"
+LIBS += -llibcurl_a
+
+LIBS += -L"$$ROOT_DIR/3rd_party/ZipLib/Bin/x86/Debug"
+LIBS += -lZipLib
+LIBS += -lbzip2
+LIBS += -llzma
+LIBS += -lzlib
+
 LIBS += -L"$(BOOST_ROOT)/lib/x32/lib"
 #LIBS += -llibboost_system-vc140-mt-gd-1_64
 
