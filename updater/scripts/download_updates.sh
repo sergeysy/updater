@@ -7,6 +7,6 @@ SOURCE=$1
 DESTINITION_FOLDER=$2
 
 
-rsync -avv --delete-during -compress-level=9 -e "ssh -p 22"  kartel@192.168.50.55:${SOURCE} ${DESTINITION_FOLDER}
+rsync -avv --delete-during -compress-level=9 -e "ssh -p 22"  kartel@192.168.50.105:${SOURCE} ${DESTINITION_FOLDER}
 
 exit $?
