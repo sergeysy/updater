@@ -1,13 +1,11 @@
 /Backup
 /build*
 /3rd_party/curl/build*
-Makefile
 Makefile.*
 *.vc.db
 *.opendb
 *.ncb
 *.suo
-*.vcproj
 *.user
 *.zip
 UpgradeLog*.*
@@ -16,9 +14,7 @@ UpgradeLog*.*
 */Win32*
 [Dd]ebug*/
 [Rr]elease*/
-*.sln
 *.vcxproj*
-*.rc
 *.pro.*
 moc_*.*
 *.o
