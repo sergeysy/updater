@@ -43,8 +43,8 @@ signals:
 
 private:
 	Ui::updaterClass ui;
-    ValidatorListModel* model_;
-    ValidatorProcessUpdateProxyModel* proxy_;
+    //ValidatorListModel* model_;
+    //ValidatorProcessUpdateProxyModel* proxy_;
     void connections();
     void init();
 

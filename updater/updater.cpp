@@ -32,19 +32,19 @@ updater::updater(QWidget *parent)
 {
     init();
 	ui.setupUi(this);
-    model_ = new ValidatorListModel(this);
+    auto model = new ValidatorListModel(this);
 
     auto sortedModel = new QSortFilterProxyModel(this);
-    sortedModel->setSourceModel(model_);
+    sortedModel->setSourceModel(model);
 
     sortedModel->setDynamicSortFilter(true);
     sortedModel->setSortRole(ValidatorListModel::deviceRole::IPRole);
     sortedModel->invalidate();
 
     ui.listView->setModel(sortedModel);
-    proxy_ = new ValidatorProcessUpdateProxyModel(this);
-    proxy_->setSourceModel(model_);
-    ui.lvStatusValidator->setModel(proxy_);
+	auto proxy = new ValidatorProcessUpdateProxyModel(this);
+    proxy->setSourceModel(model);
+    ui.lvStatusValidator->setModel(proxy);
     connections();
 
     fillListUpdateSoftware();
@@ -59,18 +59,19 @@ void updater::connections()
     timerDetecting_ = new QTimer(this);
     const int intervalUpdateMSec = 100;
     timerDetecting_->setInterval(intervalUpdateMSec);
-    connect(timerDetecting_, &QTimer::timeout, this, &updater::updateStatusDetecting);
+    connect(timerDetecting_, &QTimer::timeout, this, &updater::updateStatusDetecting, Qt::QueuedConnection);
     ui.lvStatusValidator->setVisible(false);
     ui.infoValidatorWidget->setVisible(false);
 
     connect(ui.pbChangeId, &QPushButton::clicked, this, &updater::commandChangeValidatorId, Qt::QueuedConnection);
     auto model = ui.listView->model();
-    connect(model, &ValidatorListModel::dataChanged, proxy_, &ValidatorProcessUpdateProxyModel::dataChanged,Qt::QueuedConnection);
+	auto proxy = ui.lvStatusValidator->model();
+    connect(model, &ValidatorListModel::dataChanged, proxy, &ValidatorProcessUpdateProxyModel::dataChanged,Qt::QueuedConnection);
     connect(model, &ValidatorListModel::dataChanged, this, &updater::modelDataChanged,Qt::QueuedConnection);
-    connect(model, &ValidatorListModel::modelReset, this, &updater::modelReseted,Qt::QueuedConnection);
-    connect(model, &ValidatorListModel::modelReset, proxy_, &ValidatorProcessUpdateProxyModel::modelReset, Qt::QueuedConnection);
-    connect(model, &ValidatorListModel::rowsInserted, proxy_, &ValidatorProcessUpdateProxyModel::rowsInserted, Qt::QueuedConnection);
-
+	connect(model, &ValidatorListModel::modelReset, proxy, &ValidatorProcessUpdateProxyModel::modelReset, Qt::QueuedConnection);
+	connect(model, &ValidatorListModel::modelReset, this, &updater::modelReseted,Qt::QueuedConnection);
+    //connect(model, &ValidatorListModel::rowsInserted, proxy, &ValidatorProcessUpdateProxyModel::rowsInserted, Qt::QueuedConnection);
+	
     connect(ui.pbDownloadUpdates, &QPushButton::clicked, this, &updater::commandDownloadUpdates, Qt::QueuedConnection);
 }
 
@@ -119,7 +120,10 @@ void updater::commnadFindValidators()
     }
 
     auto model = (ui.listView->model());
-    model->removeRows(0, model->rowCount());
+	if (model != nullptr)
+	{
+		model->removeRows(0, model->rowCount());
+	}
 
 
     emit stopAll();
@@ -256,7 +260,10 @@ void updater::updateListDevices(const QString ipString,
                                 const QJsonObject jsonObject)
 {
     auto model = (ui.listView->model());
-
+	if (model == nullptr)
+	{
+		return;
+	}
     QModelIndex index;
     model->insertRow(model->rowCount(), index);
     model->setData(index, ipString, ValidatorListModel::deviceRole::IPRole);
