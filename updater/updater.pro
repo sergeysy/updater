@@ -82,7 +82,7 @@ win32 {
 LIBS += -L"$$ROOT_DIR/3rd_party/curl/builds/libcurl-vc14-x86-release-static-ipv6-sspi-winssl/lib"
 LIBS += -llibcurl_a
 
-LIBS += -L"$$ROOT_DIR/3rd_party/ZipLib/Bin/x86/Debug"
+LIBS += -L"$$ROOT_DIR/3rd_party/ZipLib/Bin/x86/$$CONFIGURATION"
 LIBS += -lZipLib
 LIBS += -lbzip2
 LIBS += -llzma
