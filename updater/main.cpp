@@ -10,10 +10,10 @@
 class ManagerLogger
 {
 public:
-	ManagerLogger(boost::filesystem::path& path)
-	{
+    ManagerLogger(const boost::filesystem::path& path)
+    {
 		freopen((path/"1.log").string().c_str(), "w", stdout);
-		freopen((path/"2.log").string().c_str(), "w", stderr);
+        freopen((path/"2.log").string().c_str(), "w", stderr);
 	}
 	~ManagerLogger()
 	{
@@ -24,7 +24,7 @@ public:
 
 int main(int argc, char *argv[])
 {
-	ManagerLogger logger(boost::filesystem::system_complete(argv[0]));
+    ManagerLogger logger(boost::filesystem::path(argv[0]).parent_path());
     // For correct UTF-8 strings interpretation.
     QTextCodec * codec = QTextCodec::codecForName("UTF-8");
     if(nullptr != codec)

@@ -685,7 +685,7 @@ void updater::fillListUpdateSoftware()
     ui.comboBoxUpdateSoftware->setCurrentIndex(-1);
 }
 
-void updater::errorProcessDownloadUpdates(const  QString ip, const QString message)
+void updater::errorProcessDownloadUpdates(const  QString /*ip*/, const QString message)
 {
     finishedDownloadUpdates();
     ui.labelStatusDetect->setText(message);
