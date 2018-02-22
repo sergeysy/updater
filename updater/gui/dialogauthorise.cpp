@@ -30,19 +30,15 @@ void DialogAuthorise::checkInputLogin(const QString &loginNeedCheck)
         return login.first == loginNeedCheck;
     });
 
-    if(const_it != logins.cend())
+    if(const_it != logins.cend() && const_it->second.isEmpty())
     {
-        if(const_it->second.isEmpty())
-        {
-            showSignUp();
-            const auto visibleRetypePassword = false;
-            ui->labelInfoPassword->setVisible(visibleRetypePassword);
-            ui->labelInfoPassword->setEnabled(visibleRetypePassword);
-            return;
-        }
+        showSignUp();
+    }
+    else
+    {
+        showSignIn();
     }
 
-    showSignIn();
     const auto visibleRetypePassword = false;
     ui->labelInfoPassword->setVisible(visibleRetypePassword);
     ui->labelInfoPassword->setEnabled(visibleRetypePassword);
