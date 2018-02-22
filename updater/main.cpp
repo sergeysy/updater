@@ -5,6 +5,7 @@
 #include <QTextCodec>
 #include <QtWidgets/QApplication>
 
+#include "gui/dialogauthorise.h"
 #include "updater.h"
 
 class ManagerLogger
@@ -33,8 +34,14 @@ int main(int argc, char *argv[])
     }
 
 	QApplication a(argc, argv);
-	updater mainWindow;
+    DialogAuthorise dlg;
+    if(dlg.exec() == QDialog::Accepted)
+    {
+        updater mainWindow;
 
-	mainWindow.show();
+        mainWindow.show();
+    }
+
+
 	return a.exec();
 }
