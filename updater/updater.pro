@@ -53,7 +53,8 @@ HEADERS += ./updater.h \
     model/validatorlistmodel.hpp \
     detectorvalidator.hpp \
     gui/changeiddialog.h \
-    commands/commands.hpp
+    commands/commands.hpp \
+    gui/dialogauthorise.h
 
 SOURCES += ./main.cpp \
 	./updater.cpp \
@@ -61,11 +62,14 @@ SOURCES += ./main.cpp \
     model/validatorlistmodel.cpp \
     detectorvalidator.cpp \
     gui/changeiddialog.cpp \
-    commands/commands.cpp
+    commands/commands.cpp \
+    gui/dialogauthorise.cpp
 #	./settingsApplication/settings.ini
 
 FORMS += ./updater.ui \
-    gui/changeiddialog.ui
+    gui/changeiddialog.ui \
+    gui/dialogauthorise.ui \
+    gui/dialogauthorise.ui
 
 # RESOURCES += updater.qrc
 
