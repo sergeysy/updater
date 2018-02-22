@@ -46,7 +46,13 @@ void DialogAuthorise::checkInputLogin(const QString &loginNeedCheck)
 
 void DialogAuthorise::checkSignUp()
 {
-    if(ui->lePassword->text() == ui->leRetypePassword->text())
+    const auto password = ui->lePassword->text();
+    const auto retypePassword = ui->leRetypePassword->text();
+    if(password.isEmpty() || retypePassword.isEmpty())
+    {
+        return;
+    }
+    if(password == retypePassword)
     {
         done(QDialog::Accepted);
     }
