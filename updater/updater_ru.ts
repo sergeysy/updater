@@ -166,6 +166,19 @@
     </message>
 </context>
 <context>
+    <name>Text button</name>
+    <message>
+        <location filename="gui/dialogauthorise.cpp" line="122"/>
+        <source>Sign Up</source>
+        <translation type="unfinished">Регистрация</translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.cpp" line="128"/>
+        <source>Sign In</source>
+        <translation type="unfinished">Вход</translation>
+    </message>
+</context>
+<context>
     <name>Transactions</name>
     <message>
         <source>Copy data</source>

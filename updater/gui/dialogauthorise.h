@@ -24,7 +24,7 @@ private:
     bool visibleRetypePassword_ = false;
     void showSignUp();
     void showSignIn();
-    void showSign(const QString& labelSign, const bool visible);
+    void showSign(const QString& labelSign, const QString &textButton, const bool visible);
 
 private slots:
     void checkInputLogin(const QString& login);

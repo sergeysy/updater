@@ -119,16 +119,16 @@ void DialogAuthorise::showSignUp()
 {
     visibleRetypePassword_ = true;
 
-    showSign(tr("Sign Up"), visibleRetypePassword_);
+    showSign(tr("Sign Up"), QCoreApplication::translate("Text button","Sign Up"), visibleRetypePassword_);
 }
 
 void DialogAuthorise::showSignIn()
 {
     visibleRetypePassword_ = false;
-    showSign(tr("Sign In"), visibleRetypePassword_);
+    showSign(tr("Sign In"),  QCoreApplication::translate("Text button","Sign In"), visibleRetypePassword_);
 }
 
-void DialogAuthorise::showSign(const QString& labelSign, const bool visible)
+void DialogAuthorise::showSign(const QString& labelSign, const QString& textButton, const bool visible)
 {
     ui->labelSign->setText(labelSign);
 
@@ -142,5 +142,7 @@ void DialogAuthorise::showSign(const QString& labelSign, const bool visible)
 
     ui->labelInfoPassword->setVisible(visible);
     ui->labelInfoPassword->setEnabled(visible);
+
+    ui->pushButton->setText(textButton);
 }
 
