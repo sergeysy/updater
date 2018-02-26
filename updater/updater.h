@@ -3,7 +3,7 @@
 #include <boost/filesystem.hpp>
 
 #include <QJsonObject>
-#include <QTranslator>
+
 #include <QSettings>
 #include <QtWidgets/QMainWindow>
 #include <QAtomicInt>
@@ -56,7 +56,7 @@ private:
     QString nameServiceTransactions = QString::fromLatin1("serviceTransactions");
     QString namePathUploadSoftware = QString::fromLatin1("pathUploadSoftware");
     QString namePathUploadWhitelist = QString::fromLatin1("pathUploadWhitelist");
-    QString nameTranslatorFile = QString::fromLatin1("translator");
+    //QString nameTranslatorFile = QString::fromLatin1("translator");
 
     boost::filesystem::path folderAplication_;
     std::string folderTransactionStore_ = "transactions";
@@ -83,9 +83,6 @@ private:
 
     void updateInfoValidator(const QString &idValidator);
     void fillListUpdateSoftware();
-
-    std::shared_ptr<QTranslator> myTranslator;
-    void loadTranslate();
 
     bool extractDataDevice(const QModelIndex& index,
                            QString &ipString,

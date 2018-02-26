@@ -4,8 +4,12 @@
 
 #include <QTextCodec>
 #include <QtWidgets/QApplication>
+#include <QTranslator>
 
+#include "logger.hpp"
+#include "translator.h"
 #include "gui/dialogauthorise.h"
+#include "gui/authorise.h"
 #include "updater.h"
 
 class ManagerLogger
@@ -23,9 +27,12 @@ public:
 	}
 };
 
+
+
 int main(int argc, char *argv[])
 {
     ManagerLogger logger(boost::filesystem::path(argv[0]).parent_path());
+
     // For correct UTF-8 strings interpretation.
     QTextCodec * codec = QTextCodec::codecForName("UTF-8");
     if(nullptr != codec)
@@ -34,14 +41,15 @@ int main(int argc, char *argv[])
     }
 
 	QApplication a(argc, argv);
+    Translator translator;
+    updater mainWindow;
     DialogAuthorise dlg;
-    if(dlg.exec() == QDialog::Accepted)
+    const auto result = dlg.exec();
+    if(result == QDialog::Accepted)
     {
-        updater mainWindow;
-
         mainWindow.show();
+        return a.exec();
     }
 
-
-	return a.exec();
+    return -1;
 }

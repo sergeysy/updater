@@ -21,14 +21,17 @@ private:
 
     std::vector<std::pair<QString, QString>> logins={{tr("root"),tr("")}};
 
+    bool visibleRetypePassword_ = false;
     void showSignUp();
     void showSignIn();
     void showSign(const QString& labelSign, const bool visible);
 
 private slots:
     void checkInputLogin(const QString& login);
+    void checkSign();
     void checkSignUp();
     void checkSignIn();
+
 
 };
 

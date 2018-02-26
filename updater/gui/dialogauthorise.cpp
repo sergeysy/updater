@@ -1,3 +1,5 @@
+#include "logger.hpp"
+
 #include "dialogauthorise.h"
 #include "ui_dialogauthorise.h"
 
@@ -20,6 +22,7 @@ DialogAuthorise::~DialogAuthorise()
 void DialogAuthorise::connections()
 {
     connect(ui->leLogin, &QLineEdit::textChanged, this, &DialogAuthorise::checkInputLogin, Qt::QueuedConnection);
+    connect(ui->pushButton, &QPushButton::clicked, this, &DialogAuthorise::checkSign, Qt::QueuedConnection);
 }
 
 void DialogAuthorise::checkInputLogin(const QString &loginNeedCheck)
@@ -44,6 +47,18 @@ void DialogAuthorise::checkInputLogin(const QString &loginNeedCheck)
     ui->labelInfoPassword->setEnabled(visibleRetypePassword);
 }
 
+void DialogAuthorise::checkSign()
+{
+    if(visibleRetypePassword_)
+    {
+        checkSignUp();
+    }
+    else
+    {
+        checkSignIn();
+    }
+}
+
 void DialogAuthorise::checkSignUp()
 {
     const auto password = ui->lePassword->text();
@@ -54,7 +69,11 @@ void DialogAuthorise::checkSignUp()
     }
     if(password == retypePassword)
     {
-        done(QDialog::Accepted);
+        if(!disconnect(ui->pushButton, 0, 0, 0))
+        {
+            std::cerr<<"cant disconnect"<<std::endl;
+        }
+        QDialog::accept();
     }
     else
     {
@@ -69,7 +88,12 @@ void DialogAuthorise::checkSignUp()
 
 void DialogAuthorise::checkSignIn()
 {
+    const auto password = ui->lePassword->text();
     const auto loginNeedCheck=ui->leLogin->text();
+    if(password.isEmpty() || loginNeedCheck.isEmpty())
+    {
+        return;
+    }
     const auto const_it = std::find_if(logins.cbegin(), logins.cend(),
                                        [loginNeedCheck](const std::pair<QString, QString>& login)
     {
@@ -78,9 +102,9 @@ void DialogAuthorise::checkSignIn()
 
     if(const_it != logins.cend())
     {
-        if(const_it->second == ui->lePassword->text())
+        if(const_it->second == password)
         {
-            done(QDialog::Accepted);
+            QDialog::accept();
             return;
         }
     }
@@ -93,20 +117,15 @@ void DialogAuthorise::checkSignIn()
 
 void DialogAuthorise::showSignUp()
 {
-    const auto visibleRetypePassword = true;
+    visibleRetypePassword_ = true;
 
-    showSign(tr("Sign Up"), visibleRetypePassword);
-
-    disconnect(ui->pushButton, &QPushButton::clicked, 0, 0);
-    connect(ui->pushButton, &QPushButton::clicked, this, &DialogAuthorise::checkSignUp, Qt::QueuedConnection);
+    showSign(tr("Sign Up"), visibleRetypePassword_);
 }
 
 void DialogAuthorise::showSignIn()
 {
-    const auto visibleRetypePassword = false;
-    showSign(tr("Sign In"), visibleRetypePassword);
-    disconnect(ui->pushButton, &QPushButton::clicked, 0, 0);
-    connect(ui->pushButton, &QPushButton::clicked, this, &DialogAuthorise::checkSignIn, Qt::QueuedConnection);
+    visibleRetypePassword_ = false;
+    showSign(tr("Sign In"), visibleRetypePassword_);
 }
 
 void DialogAuthorise::showSign(const QString& labelSign, const bool visible)
@@ -124,3 +143,4 @@ void DialogAuthorise::showSign(const QString& labelSign, const bool visible)
     ui->labelInfoPassword->setVisible(visible);
     ui->labelInfoPassword->setEnabled(visible);
 }
+

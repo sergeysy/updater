@@ -89,7 +89,7 @@ void updater::init()
     settings_ = new QSettings(QString::fromStdString(pathSettingsFile.string()), QSettings::Format::IniFormat, this);
     std::cerr << logger() << "File settings opened" << std::endl;
 
-    loadTranslate();
+    //loadTranslate();
 }
 
 updater::~updater()
@@ -696,18 +696,3 @@ void updater::updateInfoValidator(const QString& idValidator)
     ui.labelIdValidatorValue->setText(idValidator);
 }
 
-void updater::loadTranslate()
-{
-    myTranslator = std::make_shared<QTranslator>();
-    std::cerr << logger() << "Locale: " << QLocale::system().name().toStdString() << " .Load traslator file: " <<settings_->value(nameTranslatorFile).toString().toStdString()
-              << " from " << folderAplication_.string() <<std::endl;
-    if(!myTranslator->load(settings_->value(nameTranslatorFile).toString(), QString::fromStdString(folderAplication_.string())))
-    {
-        std::cerr << logger() << "Not loaded file translator" << std::endl;
-        return;
-    }
-    std::cerr << logger() << "File translator was loaded" << std::endl;
-
-    QCoreApplication::instance()->installTranslator(myTranslator.get());
-    QApplication::instance()->processEvents();
-}

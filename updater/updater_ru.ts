@@ -23,91 +23,164 @@
     </message>
 </context>
 <context>
+    <name>DialogAuthorise</name>
+    <message>
+        <location filename="gui/dialogauthorise.ui" line="14"/>
+        <source>Dialog</source>
+        <translation>Авторизация</translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.ui" line="25"/>
+        <source>Login</source>
+        <translation>Логин</translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.ui" line="47"/>
+        <source>Icon multipass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.ui" line="74"/>
+        <source>Password incorected</source>
+        <translation>Некорректный пароль</translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.ui" line="87"/>
+        <source>Login *</source>
+        <translation>Логин *</translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.ui" line="116"/>
+        <source>Retype password*</source>
+        <translation>Повтор пароля *</translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.ui" line="126"/>
+        <location filename="gui/dialogauthorise.ui" line="184"/>
+        <source>icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.ui" line="138"/>
+        <source>Sign in</source>
+        <translation>Вход</translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.ui" line="174"/>
+        <source>Password *</source>
+        <translation>Параль *</translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.cpp" line="103"/>
+        <source>Sign Up</source>
+        <translation>Регистрация</translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.cpp" line="112"/>
+        <source>Sign In</source>
+        <translation>Вход</translation>
+    </message>
+    <message>
+        <location filename="gui/dialogauthorise.h" line="22"/>
+        <source>root</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DownloadUpdates</name>
     <message>
-        <location filename="commands/commands.cpp" line="309"/>
         <source>Start download updates...</source>
-        <translation>Начало загрузки обновления...</translation>
+        <translation type="vanished">Начало загрузки обновления...</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="332"/>
         <source>Fail download updates. Error code &apos;%1&apos;.</source>
-        <translation>Ошибка загрузки обновлений. Код ошибки &apos;%1&apos;.</translation>
+        <translation type="vanished">Ошибка загрузки обновлений. Код ошибки &apos;%1&apos;.</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="336"/>
         <source>Finished download updates.</source>
-        <translation>Обновления загружены</translation>
+        <translation type="vanished">Обновления загружены</translation>
+    </message>
+</context>
+<context>
+    <name>ScriptExecute</name>
+    <message>
+        <location filename="commands/commands.cpp" line="141"/>
+        <source>%1: %3. Error code &apos;%2&apos;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="commands/commands.cpp" line="152"/>
+        <source>%3: %1. Error message &apos;%2&apos;</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>Transactions</name>
     <message>
-        <location filename="commands/commands.cpp" line="35"/>
         <source>Copy data</source>
-        <translation>Копирование данных</translation>
+        <translation type="vanished">Копирование данных</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="51"/>
         <source>ERROR execute: %1.</source>
-        <translation>Ошибка: %1</translation>
+        <translation type="vanished">Ошибка: %1</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="65"/>
         <source>Can not create &quot;%1&quot;.</source>
-        <translation>Не удалось создать &quot;%1&quot;.</translation>
+        <translation type="vanished">Не удалось создать &quot;%1&quot;.</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="78"/>
         <source>Fail copy transactions from %1. Error &apos;%2&apos;.</source>
-        <translation>Не удалось скопировать транзакции с валидатора %1. Код ошибки &apos;%2&apos;.</translation>
+        <translation type="vanished">Не удалось скопировать транзакции с валидатора %1. Код ошибки &apos;%2&apos;.</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="83"/>
         <source>Delete data</source>
-        <translation>Удаление данных</translation>
+        <translation type="vanished">Удаление данных</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="96"/>
         <source>Fail remove transactions from %1. Error &apos;%2&apos;.</source>
-        <translation>Ошибка удаления транзакций из %1. Код ошибки %2</translation>
+        <translation type="vanished">Ошибка удаления транзакций из %1. Код ошибки %2</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="101"/>
         <source>Finished</source>
-        <translation>Завершено</translation>
+        <translation type="vanished">Завершено</translation>
     </message>
 </context>
 <context>
     <name>Upload</name>
     <message>
-        <location filename="commands/commands.cpp" line="179"/>
-        <location filename="commands/commands.cpp" line="215"/>
         <source>Fail create directory on %1. Error &apos;%2&apos;.</source>
-        <translation>Не удалось создать папку на %1. Код ошибки: %2</translation>
+        <translation type="vanished">Не удалось создать папку на %1. Код ошибки: %2</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="198"/>
         <source>Fail copy &quot;%3&quot; to &quot;%4&quot; on %1. Error &apos;%2&apos;.</source>
-        <translation>Ошибка копирования &quot;%3&quot; в &quot;%4&quot; на %1. Ошибка &apos;%2&apos;.</translation>
+        <translation type="vanished">Ошибка копирования &quot;%3&quot; в &quot;%4&quot; на %1. Ошибка &apos;%2&apos;.</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="228"/>
+        <location filename="commands/commands.cpp" line="40"/>
         <source>Update software</source>
         <translation>Обновление ПО</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="245"/>
         <source>update software</source>
-        <translation>Обновление ПО</translation>
+        <translation type="vanished">Обновление ПО</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="259"/>
+        <location filename="commands/commands.cpp" line="53"/>
+        <source>%1: Fail install application. Error &apos;%2&apos;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="commands/commands.cpp" line="63"/>
         <source>Update &quot;whitelist&quot;</source>
         <translation>Обновление белого списка</translation>
     </message>
     <message>
-        <location filename="commands/commands.cpp" line="272"/>
+        <location filename="commands/commands.cpp" line="72"/>
+        <source>%1: Fail install whitelist. Error &apos;%2&apos;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="commands/commands.cpp" line="82"/>
         <source>Finished</source>
         <translation>Завершено</translation>
     </message>
@@ -115,12 +188,12 @@
 <context>
     <name>ValidatorListModel</name>
     <message>
-        <location filename="model/validatorlistmodel.cpp" line="116"/>
+        <location filename="model/validatorlistmodel.cpp" line="126"/>
         <source>%1 %2%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="model/validatorlistmodel.cpp" line="121"/>
+        <location filename="model/validatorlistmodel.cpp" line="131"/>
         <source>Nothing do</source>
         <translation> </translation>
     </message>
@@ -128,92 +201,123 @@
 <context>
     <name>updater</name>
     <message>
-        <location filename="updater.cpp" line="101"/>
+        <location filename="updater.cpp" line="105"/>
         <source>Load</source>
         <translation>Загрузка</translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="190"/>
+        <location filename="updater.cpp" line="181"/>
         <source>Not found validators</source>
         <translation>Валидатор не найден</translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="195"/>
-        <location filename="updater.cpp" line="240"/>
+        <location filename="updater.cpp" line="186"/>
+        <location filename="updater.cpp" line="285"/>
         <source>Process transactions</source>
         <translation>Обработка транзакций</translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="212"/>
-        <location filename="updater.cpp" line="306"/>
-        <location filename="updater.cpp" line="442"/>
+        <location filename="updater.cpp" line="214"/>
+        <source>Copy transactions...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="updater.cpp" line="215"/>
+        <source>Finished</source>
+        <translation type="unfinished">Завершено</translation>
+    </message>
+    <message>
+        <location filename="updater.cpp" line="216"/>
+        <source>Fail copy transactions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="updater.cpp" line="244"/>
+        <location filename="updater.cpp" line="507"/>
         <source>message</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="213"/>
-        <location filename="updater.cpp" line="307"/>
+        <location filename="updater.cpp" line="245"/>
         <source>percent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="214"/>
-        <location filename="updater.cpp" line="308"/>
+        <location filename="updater.cpp" line="246"/>
         <source>ip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="236"/>
+        <location filename="updater.cpp" line="281"/>
         <source>Validators detected</source>
         <translation>Валидаторы определены</translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="251"/>
+        <location filename="updater.cpp" line="295"/>
         <source>Successful process transactions</source>
         <translation>Транзакции обработаны</translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="255"/>
+        <location filename="updater.cpp" line="299"/>
         <source>Upadate</source>
         <translation>Обновление</translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="264"/>
+        <location filename="updater.cpp" line="308"/>
         <source>Process upload</source>
         <translation>Процесс обновления</translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="297"/>
+        <location filename="updater.cpp" line="336"/>
         <source> </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="306"/>
         <source>Update software</source>
-        <translation>Обновление ПО</translation>
+        <translation type="vanished">Обновление ПО</translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="341"/>
+        <location filename="updater.cpp" line="398"/>
         <source>Find validators</source>
         <translation>Поиск валидаторов</translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="352"/>
+        <location filename="updater.cpp" line="409"/>
         <source>Update finished</source>
         <translation>Обновление завершено</translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="377"/>
+        <location filename="updater.cpp" line="436"/>
         <source>%1/%2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="520"/>
+        <location filename="updater.cpp" line="563"/>
         <source>Detecting validators</source>
         <translation>Поиск валидаторов</translation>
     </message>
     <message>
-        <location filename="updater.cpp" line="595"/>
+        <location filename="updater.cpp" line="607"/>
+        <source>192.168.50.105</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="updater.cpp" line="608"/>
+        <source>Start download updates...</source>
+        <translation type="unfinished">Начало загрузки обновления...</translation>
+    </message>
+    <message>
+        <location filename="updater.cpp" line="609"/>
+        <source>Finished download updates.</source>
+        <translation type="unfinished">Обновления загружены</translation>
+    </message>
+    <message>
+        <location filename="updater.cpp" line="610"/>
+        <source>Fail download updates.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="updater.cpp" line="630"/>
         <source>%1 %2%</source>
         <translation type="unfinished"></translation>
     </message>
@@ -222,7 +326,8 @@
     <name>updaterClass</name>
     <message>
         <location filename="updater.ui" line="14"/>
-        <source>updater</source>
+        <source>updater v1.0.0.1</source>
+        <oldsource>updater</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>

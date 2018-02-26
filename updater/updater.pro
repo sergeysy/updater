@@ -54,7 +54,9 @@ HEADERS += ./updater.h \
     detectorvalidator.hpp \
     gui/changeiddialog.h \
     commands/commands.hpp \
-    gui/dialogauthorise.h
+    gui/dialogauthorise.h \
+    gui/authorise.h \
+    translator.h
 
 SOURCES += ./main.cpp \
 	./updater.cpp \
@@ -63,13 +65,16 @@ SOURCES += ./main.cpp \
     detectorvalidator.cpp \
     gui/changeiddialog.cpp \
     commands/commands.cpp \
-    gui/dialogauthorise.cpp
+    gui/dialogauthorise.cpp \
+    gui/authorise.cpp \
+    translator.cpp
 #	./settingsApplication/settings.ini
 
 FORMS += ./updater.ui \
     gui/changeiddialog.ui \
     gui/dialogauthorise.ui \
-    gui/dialogauthorise.ui
+    gui/dialogauthorise.ui \
+    gui/authorise.ui
 
 # RESOURCES += updater.qrc
 
