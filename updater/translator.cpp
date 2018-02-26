@@ -21,7 +21,7 @@ void Translator::loadTranslate()
     myTranslator = std::make_shared<QTranslator>();
     std::cerr << logger() << "Locale: " << QLocale::system().name().toStdString() << " .Load traslator file: " <<settings_->value(nameTranslatorFile).toString().toStdString()
               << " from " << folderAplication_.string() <<std::endl;
-    //    if(!myTranslator->load(settings_->value(nameTranslatorFile).toString(), QString::fromStdString(folderAplication_.string())))
+    if(!myTranslator->load(settings_->value(nameTranslatorFile).toString(), QString::fromStdString(folderAplication_.string())))
     {
         std::cerr << logger() << "Not loaded file translator" << std::endl;
         return;

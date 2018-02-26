@@ -2,6 +2,57 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ru_RU">
 <context>
+    <name>Authorise</name>
+    <message>
+        <location filename="gui/authorise.ui" line="14"/>
+        <source>Dialog</source>
+        <translation type="unfinished">Авторизация</translation>
+    </message>
+    <message>
+        <location filename="gui/authorise.ui" line="20"/>
+        <source>ICON</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui/authorise.ui" line="34"/>
+        <location filename="gui/authorise.ui" line="188"/>
+        <location filename="gui/authorise.cpp" line="50"/>
+        <source>Sign In</source>
+        <translation type="unfinished">Вход</translation>
+    </message>
+    <message>
+        <location filename="gui/authorise.ui" line="44"/>
+        <location filename="gui/authorise.ui" line="70"/>
+        <source>icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui/authorise.ui" line="57"/>
+        <source>Password incorected</source>
+        <translation type="unfinished">Некорректный пароль</translation>
+    </message>
+    <message>
+        <location filename="gui/authorise.ui" line="80"/>
+        <source>Password *</source>
+        <translation type="unfinished">Параль *</translation>
+    </message>
+    <message>
+        <location filename="gui/authorise.ui" line="90"/>
+        <source>Login *</source>
+        <translation type="unfinished">Логин *</translation>
+    </message>
+    <message>
+        <location filename="gui/authorise.ui" line="103"/>
+        <source>Retype password *</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gui/authorise.cpp" line="55"/>
+        <source>Sign Up</source>
+        <translation type="unfinished">Регистрация</translation>
+    </message>
+</context>
+<context>
     <name>ChangeIdDialog</name>
     <message>
         <location filename="gui/changeiddialog.ui" line="20"/>
@@ -40,43 +91,43 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gui/dialogauthorise.ui" line="74"/>
+        <location filename="gui/dialogauthorise.ui" line="80"/>
         <source>Password incorected</source>
         <translation>Некорректный пароль</translation>
     </message>
     <message>
-        <location filename="gui/dialogauthorise.ui" line="87"/>
+        <location filename="gui/dialogauthorise.ui" line="93"/>
         <source>Login *</source>
         <translation>Логин *</translation>
     </message>
     <message>
-        <location filename="gui/dialogauthorise.ui" line="116"/>
+        <location filename="gui/dialogauthorise.ui" line="122"/>
         <source>Retype password*</source>
         <translation>Повтор пароля *</translation>
     </message>
     <message>
-        <location filename="gui/dialogauthorise.ui" line="126"/>
-        <location filename="gui/dialogauthorise.ui" line="184"/>
+        <location filename="gui/dialogauthorise.ui" line="132"/>
+        <location filename="gui/dialogauthorise.ui" line="196"/>
         <source>icon</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="gui/dialogauthorise.ui" line="138"/>
+        <location filename="gui/dialogauthorise.ui" line="144"/>
         <source>Sign in</source>
         <translation>Вход</translation>
     </message>
     <message>
-        <location filename="gui/dialogauthorise.ui" line="174"/>
+        <location filename="gui/dialogauthorise.ui" line="186"/>
         <source>Password *</source>
         <translation>Параль *</translation>
     </message>
     <message>
-        <location filename="gui/dialogauthorise.cpp" line="103"/>
+        <location filename="gui/dialogauthorise.cpp" line="122"/>
         <source>Sign Up</source>
         <translation>Регистрация</translation>
     </message>
     <message>
-        <location filename="gui/dialogauthorise.cpp" line="112"/>
+        <location filename="gui/dialogauthorise.cpp" line="128"/>
         <source>Sign In</source>
         <translation>Вход</translation>
     </message>
