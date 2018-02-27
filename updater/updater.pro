@@ -56,7 +56,8 @@ HEADERS += ./updater.h \
     commands/commands.hpp \
     gui/dialogauthorise.h \
     gui/authorise.h \
-    translator.h
+    translator.h \
+    account.h
 
 SOURCES += ./main.cpp \
 	./updater.cpp \
@@ -67,7 +68,8 @@ SOURCES += ./main.cpp \
     commands/commands.cpp \
     gui/dialogauthorise.cpp \
     gui/authorise.cpp \
-    translator.cpp
+    translator.cpp \
+    account.cpp
 #	./settingsApplication/settings.ini
 
 FORMS += ./updater.ui \

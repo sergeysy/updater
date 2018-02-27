@@ -696,3 +696,9 @@ void updater::updateInfoValidator(const QString& idValidator)
     ui.labelIdValidatorValue->setText(idValidator);
 }
 
+void updater::setAccount(const Account& account)
+{
+    account_ = account;
+
+    ui.lbNameAccount->setText(account_.name_);
+}

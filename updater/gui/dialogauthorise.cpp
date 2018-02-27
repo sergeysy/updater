@@ -1,3 +1,5 @@
+#include <QCryptographicHash>
+
 #include "logger.hpp"
 
 #include "dialogauthorise.h"
@@ -27,13 +29,13 @@ void DialogAuthorise::connections()
 
 void DialogAuthorise::checkInputLogin(const QString &loginNeedCheck)
 {
-    const auto const_it = std::find_if(logins.cbegin(), logins.cend(),
-                                       [&loginNeedCheck](const std::pair<QString, QString>& login)
+    const auto const_it = std::find_if(accounts_.cbegin(), accounts_.cend(),
+                                       [&loginNeedCheck](const Account& account)
     {
-        return login.first == loginNeedCheck;
+        return account.login_ == loginNeedCheck;
     });
 
-    if(const_it != logins.cend() && const_it->second.isEmpty())
+    if(const_it != accounts_.cend() && const_it->hashPassword_.isEmpty())
     {
         showSignUp();
     }
@@ -94,15 +96,17 @@ void DialogAuthorise::checkSignIn()
     {
         return;
     }
-    const auto const_it = std::find_if(logins.cbegin(), logins.cend(),
-                                       [loginNeedCheck](const std::pair<QString, QString>& login)
+    const auto const_it = std::find_if(accounts_.cbegin(), accounts_.cend(),
+                                       [loginNeedCheck](const Account& account)
     {
-        return login.first == loginNeedCheck;
+        return account.login_== loginNeedCheck;
     });
 
-    if(const_it != logins.cend())
+    if(const_it != accounts_.cend())
     {
-        if(const_it->second == password)
+        const auto hash = QCryptographicHash::hash((loginNeedCheck+password).toLatin1(), QCryptographicHash::Sha3_512);
+
+        if(const_it->hashPassword_ == hash)
         {
             QDialog::accept();
             return;
@@ -146,3 +150,25 @@ void DialogAuthorise::showSign(const QString& labelSign, const QString& textButt
     ui->pushButton->setText(textButton);
 }
 
+Account DialogAuthorise::getAccount() const
+{
+    Account account;
+    const auto loginNeedCheck = ui->leLogin->text();
+    const auto const_it = std::find_if(accounts_.cbegin(), accounts_.cend(),
+                                       [loginNeedCheck](const Account& account)
+    {
+        return account.login_== loginNeedCheck;
+    });
+
+    if(const_it != accounts_.cend())
+    {
+        account = {const_it->login_, const_it->hashPassword_, const_it->name_};
+    }
+
+    return account;
+}
+
+void DialogAuthorise::setAccounts(const std::vector<Account> &accounts)
+{
+    accounts_ = accounts;
+}

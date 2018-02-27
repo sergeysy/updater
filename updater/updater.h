@@ -8,6 +8,7 @@
 #include <QtWidgets/QMainWindow>
 #include <QAtomicInt>
 
+#include "account.h"
 #include "model/validatorlistmodel.hpp"
 #include "ui_updater.h"
 
@@ -37,6 +38,8 @@ public:
     void errorProcess(const QString ipString, const QString);
 
     void commandChangeValidatorId();
+
+    void setAccount(const Account& account);
 
 signals:
     void stopAll();
@@ -96,6 +99,8 @@ private:
                                      const QString &idString,
                                      const QString &pathUploadSoftware,
                                      const QString &pathUploadWhitelist);
+
+    Account account_;
 
 private slots:
     void updateStatusDetecting();

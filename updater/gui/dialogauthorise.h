@@ -3,6 +3,8 @@
 
 #include <QDialog>
 
+#include "account.h"
+
 namespace Ui {
 class DialogAuthorise;
 }
@@ -15,11 +17,15 @@ public:
     explicit DialogAuthorise(QWidget *parent = 0);
     ~DialogAuthorise();
 
+    Account getAccount() const;
+
+    void setAccounts(const std::vector<Account> &accounts);
+
 private:
     Ui::DialogAuthorise *ui;
     void connections();
 
-    std::vector<std::pair<QString, QString>> logins={{tr("root"),tr("")}};
+    std::vector<Account> accounts_;
 
     bool visibleRetypePassword_ = false;
     void showSignUp();

@@ -16,6 +16,11 @@ Translator::Translator(QObject *parent) : QObject(parent)
     loadTranslate();
 }
 
+QSettings *Translator::settings() const
+{
+    return settings_;
+}
+
 void Translator::loadTranslate()
 {
     myTranslator = std::make_shared<QTranslator>();

@@ -18,7 +18,7 @@ class Translator : QObject
     Q_OBJECT
 public:
     Translator(QObject *parent = nullptr);
-
+    QSettings* settings() const;
 private:
     std::shared_ptr<QTranslator> myTranslator;
     boost::filesystem::path folderAplication_;
