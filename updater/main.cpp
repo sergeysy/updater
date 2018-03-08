@@ -19,8 +19,8 @@ class ManagerLogger
 public:
     ManagerLogger(const boost::filesystem::path& path)
     {
-		freopen((path/"1.log").string().c_str(), "w", stdout);
-        freopen((path/"2.log").string().c_str(), "w", stderr);
+        freopen((path/"1.log").string().c_str(), "a+", stdout);
+        freopen((path/"2.log").string().c_str(), "a+", stderr);
 	}
 	~ManagerLogger()
 	{
@@ -73,7 +73,7 @@ settings->setIniCodec(QTextCodec::codecForLocale());
         {
             const auto val =
                         QString::fromUtf8(settings->value(QString::fromLatin1("name")).toByteArray());
-            auto name=QString::fromUtf8(QTextCodec::codecForLocale()->fromUnicode(val));
+            auto name = QString::fromUtf8(QTextCodec::codecForLocale()->fromUnicode(val));
             result.push_back({
                         settings->value(QString::fromLatin1("login")).toString(),
                         settings->value(QString::fromLatin1("password")).toByteArray(),
@@ -98,7 +98,7 @@ settings->setIniCodec(QTextCodec::codecForLocale());
 
 int main(int argc, char *argv[])
 {
-    ManagerLogger logger(boost::filesystem::path(argv[0]).parent_path());
+    ManagerLogger mangerLogger(boost::filesystem::path(argv[0]).parent_path());
 
     // For correct UTF-8 strings interpretation.
     QTextCodec * codec = QTextCodec::codecForName("UTF-8");
@@ -120,7 +120,8 @@ int main(int argc, char *argv[])
     {
         const auto account = dlg.getAccount();
         saveHashPassword(settings, account.login_, account.hashPassword_);
-
+        QString mes = (QT_TRANSLATE_NOOP("Main.cpp", QString::fromLatin1("Sign in: ")));
+        std::cerr<<logger()<< mes.toStdString() << account.name_.toStdString()<<std::endl;
         mainWindow.setAccount(account);
         mainWindow.show();
         return a.exec();

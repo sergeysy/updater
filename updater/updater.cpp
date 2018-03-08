@@ -272,6 +272,9 @@ void updater::updateListDevices(const QString ipString,
     for(auto& item : list)
     {
         model->setData(item, jsonObject, ValidatorListModel::deviceRole::DisplayRole);
+        const auto idValidator = model->data(item, ValidatorListModel::deviceRole::IdRole).toString().toStdString();
+        std::cerr<<logger()<< tr("Connected to validator: ").toStdString() << idValidator << " " << account_.name_.toStdString()<<std::endl;
+
     }
 
     const auto value = countQueryIp_.fetchAndAddAcquire(-1);
